@@ -1,0 +1,24 @@
+# Compiled Object files
+*.slo
+*.lo
+*.o
+
+# Compiled Dynamic libraries
+*.so
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+
+# Visual Studio Stuff
+*.suo
+*.pdb
+*ipch/
+*Win32/
+*Debug/
+*Release/
+
+# Mac Stuff
+*.DS_Store
+*bin/
