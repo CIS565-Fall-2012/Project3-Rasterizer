@@ -6,7 +6,7 @@
 #include <cmath>
 #include <cutil_math.h>
 #include <thrust/random.h>
-#include "rasterizeKernel.h"
+#include "rasterizeKernels.h"
 #include "rasterizeTools.h"
 
 glm::vec3* framebuffer;

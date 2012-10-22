@@ -9,12 +9,12 @@ Due Monday 11/05/2012
 -------------------------------------------------------------------------------
 NOTE:
 -------------------------------------------------------------------------------
-This project requires an NVIDIA graphics card with CUDA capability! Any card after the Geforce 8xxx series will work. If you do not have an NVIDIA graphics card in the machine you are working on, feel free to use any machine in the SIG Lab or in Moore100 labs. All machines in the SIG Lab and Moore100 are equipped with CUDA capable NVIDIA graphics cards. If this too proves to be a problem, please contact Patrick or Karl as soon as possible.
+This project requires an NVIDIA graphics card with CUDA capability! Any card with CUDA compute capability 1.1 or higher will work fine for this project. For a full list of CUDA capable cards and their compute capability, please consult: http://developer.nvidia.com/cuda/cuda-gpus. If you do not have an NVIDIA graphics card in the machine you are working on, feel free to use any machine in the SIG Lab or in Moore100 labs. All machines in the SIG Lab and Moore100 are equipped with CUDA capable NVIDIA graphics cards. If this too proves to be a problem, please contact Patrick or Karl as soon as possible.
 
 -------------------------------------------------------------------------------
 INTRODUCTION:
 -------------------------------------------------------------------------------
-In this project, you will implement a simplified CUDA based implementation of a stanrad rasterized graphics pipeline, similar to the OpenGL pipeline. In this project, you will implement vertex shading, primitive assembly, perspective transformation, rasterization, fragment shading, and write the resulting fragments to a framebuffer. More information about the rasterized graphics pipeline can be found in the 10/15 class slides and in your notes from CIS560.
+In this project, you will implement a simplified CUDA based implementation of a standard rasterized graphics pipeline, similar to the OpenGL pipeline. In this project, you will implement vertex shading, primitive assembly, perspective transformation, rasterization, fragment shading, and write the resulting fragments to a framebuffer. More information about the rasterized graphics pipeline can be found in the 10/15 class slides and in your notes from CIS560.
 
 The basecode provided includes an OBJ loader and much of the mundane I/O and bookkeeping code. The basecode also includes some functions that you may find useful, described below. The core rasterization pipeline is left for you to implement.
 
@@ -53,7 +53,7 @@ You will need to implement the following stages of the graphics pipeline and fea
 * Perspective Transformation
 * Rasterization through either a scanline or a tiled approach
 * Fragment Shading
-* A Z-depth buffer for storing and depth testing fragments
+* A depth buffer for storing and depth testing fragments
 * Fragment to framebuffer writing
 * A simple lighting/shading scheme, such as Lambert or Blinn-Phong, implemented in the fragment shader
 
@@ -86,8 +86,8 @@ BASE CODE TOUR:
 -------------------------------------------------------------------------------
 You will be working primarily in two files: rasterizeKernel.cu, and rasterizerTools.h. Within these files, areas that you need to complete are marked with a TODO comment. Areas that are useful to and serve as hints for optional features are marked with TODO (Optional). Functions that are useful for reference are marked with the comment LOOK.
 
-* rasterizeKernel.cu contains the core rasterization pipeline. 
-	* The name of this file is a slight misnomer, since you will actually be implementing a series of kernels for the rasterization pipeline. A suggested sequence of kernels exists in this file, but you may choose to alter the order of this sequence or merge entire kernels if you see fit. For example, if you decide that doing has benefits, you can choose to merge the vertex shader and primitive assembly kernels, or merge the perspective transform into another kernel. There is not necessarily a right sequence of kernels (although there are wrong sequences, such as placing fragment shading before vertex shading), and you may choose any sequence you want. Please document in your README what sequence you choose and why.
+* rasterizeKernels.cu contains the core rasterization pipeline. 
+	* A suggested sequence of kernels exists in this file, but you may choose to alter the order of this sequence or merge entire kernels if you see fit. For example, if you decide that doing has benefits, you can choose to merge the vertex shader and primitive assembly kernels, or merge the perspective transform into another kernel. There is not necessarily a right sequence of kernels (although there are wrong sequences, such as placing fragment shading before vertex shading), and you may choose any sequence you want. Please document in your README what sequence you choose and why.
 	* The provided kernels have had their input parameters removed beyond basic inputs such as the framebuffer. You will have to decide what inputs should go into each stage of the pipeline, and what outputs there should be. 
 
 * rasterizeTools.h contains various useful tools, including a number of barycentric coordinate related functions that you may find useful in implementing scanline based rasterization...

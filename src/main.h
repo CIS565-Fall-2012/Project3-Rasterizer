@@ -23,7 +23,7 @@
 #include <time.h>
 #include "glslUtility.h"
 #include "glm/glm.hpp"
-#include "rasterizeKernel.h"
+#include "rasterizeKernels.h"
 #include "utilities.h"
 #include "ObjCore/objloader.h"
 

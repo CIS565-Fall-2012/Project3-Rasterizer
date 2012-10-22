@@ -16,7 +16,7 @@
     <ClInclude Include="..\..\src\main.h" />
     <ClInclude Include="..\..\src\ObjCore\obj.h" />
     <ClInclude Include="..\..\src\ObjCore\objloader.h" />
-    <ClInclude Include="..\..\src\rasterizeKernel.h" />
+    <ClInclude Include="..\..\src\rasterizeKernels.h" />
     <ClInclude Include="..\..\src\rasterizeTools.h" />
     <ClInclude Include="..\..\src\utilities.h" />
   </ItemGroup>
@@ -28,7 +28,7 @@
     <ClCompile Include="..\..\src\utilities.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="..\..\src\rasterizeKernel.cu" />
+    <CudaCompile Include="..\..\src\rasterizeKernels.cu" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{FF21CA49-522E-4E86-B508-EE515B248FC4}</ProjectGuid>

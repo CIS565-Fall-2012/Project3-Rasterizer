@@ -17,7 +17,7 @@ LFLAGS = $(GLFW) $(CUDA) $(XLINKER) -lglfw
 all: rasterizer
 
 rasterizer: ../src/main.cpp
-	$(NVCC) $(GLEW_PATH) $(LFLAGS) ../src/main.cpp ../src/rasterizeKernel.cu ../src/glslUtility.cpp ../src/utilities.cpp ../src/ObjCore/obj.cpp ../src/ObjCore/objloader.cpp -o bin/rasterizer
+	$(NVCC) $(GLEW_PATH) $(LFLAGS) ../src/main.cpp ../src/rasterizeKernels.cu ../src/glslUtility.cpp ../src/utilities.cpp ../src/ObjCore/obj.cpp ../src/ObjCore/objloader.cpp -o bin/rasterizer
 
 clean:
 	rm bin/rasterizer

@@ -4,7 +4,7 @@
     <ClInclude Include="..\..\src\cudaMat4.h" />
     <ClInclude Include="..\..\src\glslUtility.h" />
     <ClInclude Include="..\..\src\main.h" />
-    <ClInclude Include="..\..\src\rasterizeKernel.h" />
+    <ClInclude Include="..\..\src\rasterizeKernels.h" />
     <ClInclude Include="..\..\src\rasterizeTools.h" />
     <ClInclude Include="..\..\src\utilities.h" />
     <ClInclude Include="..\..\src\ObjCore\obj.h">
@@ -26,7 +26,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="..\..\src\rasterizeKernel.cu" />
+    <CudaCompile Include="..\..\src\rasterizeKernels.cu" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="ObjCore">
