@@ -60,26 +60,26 @@ You will need to implement the following stages of the graphics pipeline and fea
 You are also required to implement at least 3 of the following features:
 
 * Additional pipeline stages. Each one of these stages can count as 1 feature:
-	*Geometry shader
-	*Transformation feedback
-	*Back-face culling
-	*Scissor test
-	*Stencil test
-	*Blending
-	IMPORTANT: For each of these stages implemented, you must also add a section to your README stating what the expected performance impact of that pipeline stage is, and real performance comparisons between your rasterizer with that stage and without.
-*Correct color interpretation between points on a primitive
-*Texture mapping WITH texture filtering and perspective correct texture coordinates
-*Support for additional primitices. Each one of these can count as HALF of a feature.
-	*Lines
-	*Line strips
-	*Triangle fans
-	*Triangle strips
-	*Quads
-	*Quad strips
-	*Points
-*Anti-aliasing
-*Order-independent translucency using a k-buffer
-*MOUSE BASED interactive camera support. Interactive camera support based only on the keyboard is not acceptable for this feature.
+   * Geometry shader
+   * Transformation feedback
+   * Back-face culling
+   * Scissor test
+   * Stencil test
+   * Blending
+
+IMPORTANT: For each of these stages implemented, you must also add a section to your README stating what the expected performance impact of that pipeline stage is, and real performance comparisons between your rasterizer with that stage and without.
+
+* Correct color interpretation between points on a primitive
+* Texture mapping WITH texture filtering and perspective correct texture coordinates
+* Support for additional primitices. Each one of these can count as HALF of a feature.
+   * Lines
+   * Line strips
+   * Triangle fans
+   * Triangle strips
+   * Points
+* Anti-aliasing
+* Order-independent translucency using a k-buffer
+* MOUSE BASED interactive camera support. Interactive camera support based only on the keyboard is not acceptable for this feature.
 
 -------------------------------------------------------------------------------
 BASE CODE TOUR:
