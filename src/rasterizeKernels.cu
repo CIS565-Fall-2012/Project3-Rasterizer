@@ -6,6 +6,7 @@
 #include <cmath>
 #include <cutil_math.h>
 #include <thrust/random.h>
+#include "glm/gtx/vector_access.hpp"
 #include "rasterizeKernels.h"
 #include "rasterizeTools.h"
 
@@ -197,6 +198,10 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float*
   frag.position = glm::vec3(0,0,-10000);
   clearDepthBuffer<<<fullBlocksPerGrid, threadsPerBlock>>>(resolution, depthbuffer,frag);
 
+  Light hostLight;
+  glm::set(hostLight.color, 1.f, 1.f, 1.f);
+  glm::set(hostLight.position, 0.f, 0.f, -12.f);
+
   //------------------------------
   //memory stuff
   //------------------------------
@@ -214,6 +219,10 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float*
   device_cbo = NULL;
   cudaMalloc((void**)&device_cbo, cbosize*sizeof(float));
   cudaMemcpy( device_cbo, cbo, cbosize*sizeof(float), cudaMemcpyHostToDevice);
+
+  Light* light = NULL;
+  cudaMalloc((void**)&light, sizeof(Light));
+  cudaMemcpy( light, &hostLight, sizeof(Light), cudaMemcpyHostToDevice);
 
   tileSize = 32;
   int primitiveBlocks = ceil(((float)vbosize/3)/((float)tileSize));
@@ -263,5 +272,6 @@ void kernelCleanup(){
   cudaFree( device_ibo );
   cudaFree( framebuffer );
   cudaFree( depthbuffer );
+  cudaFree( light );
 }
 
