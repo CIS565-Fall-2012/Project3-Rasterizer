@@ -16,6 +16,7 @@ float* device_vbo;
 float* device_cbo;
 int* device_ibo;
 triangle* primitives;
+Light* light;
 
 void checkCUDAError(const char *msg) {
   cudaError_t err = cudaGetLastError();
@@ -220,7 +221,7 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float*
   cudaMalloc((void**)&device_cbo, cbosize*sizeof(float));
   cudaMemcpy( device_cbo, cbo, cbosize*sizeof(float), cudaMemcpyHostToDevice);
 
-  Light* light = NULL;
+  light = NULL;
   cudaMalloc((void**)&light, sizeof(Light));
   cudaMemcpy( light, &hostLight, sizeof(Light), cudaMemcpyHostToDevice);
 
