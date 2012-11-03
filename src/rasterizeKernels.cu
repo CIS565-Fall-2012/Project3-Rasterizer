@@ -152,6 +152,19 @@ __global__ void primitiveAssemblyKernel(float* vbo, int vbosize, float* cbo, int
   int index = (blockIdx.x * blockDim.x) + threadIdx.x;
   int primitivesCount = ibosize/3;
   if(index<primitivesCount){
+	  const int* attr_idx_ptr = &ibo[3*index];
+
+	  int comp_idx0 = 3*attr_idx_ptr[0];
+	  int comp_idx1 = 3*attr_idx_ptr[1];
+	  int comp_idx2 = 3*attr_idx_ptr[2];
+
+	  glm::set(primitives[index].p0, vbo[comp_idx0], vbo[comp_idx0+1], vbo[comp_idx0+2]);
+	  glm::set(primitives[index].p1, vbo[comp_idx1], vbo[comp_idx1+1], vbo[comp_idx1+2]);
+	  glm::set(primitives[index].p2, vbo[comp_idx2], vbo[comp_idx2+1], vbo[comp_idx2+2]);
+
+	  glm::set(primitives[index].c0, cbo[comp_idx0], cbo[comp_idx0+1], cbo[comp_idx0+2]);
+	  glm::set(primitives[index].c1, cbo[comp_idx1], cbo[comp_idx1+1], cbo[comp_idx1+2]);
+	  glm::set(primitives[index].c2, cbo[comp_idx2], cbo[comp_idx2+1], cbo[comp_idx2+2]);
   }
 }
 
