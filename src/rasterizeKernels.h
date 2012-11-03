@@ -10,8 +10,10 @@
 #include <cmath>
 #include <cutil_math.h>
 #include "glm/glm.hpp"
+#include "cudaMat4.h"
 
 void kernelCleanup();
-void cudaRasterizeCore(uchar4* pos, glm::vec2 resolution, float frame, float* vbo, int vbosize, float* cbo, int cbosize, int* ibo, int ibosize);
-
+void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, 
+                       float* vbo, int vbosize, float* cbo, int cbosize, int* ibo, int ibosize,
+					   const cudaMat4* hostMVP_mat);
 #endif //RASTERIZEKERNEL_H

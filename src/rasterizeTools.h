@@ -8,26 +8,7 @@
 #include "glm/glm.hpp"
 #include "utilities.h"
 #include "cudaMat4.h"
-
-struct triangle {
-  glm::vec3 p0;
-  glm::vec3 p1;
-  glm::vec3 p2;
-  glm::vec3 c0;
-  glm::vec3 c1;
-  glm::vec3 c2;
-};
-
-struct fragment{
-  glm::vec3 color;
-  glm::vec3 normal;
-  glm::vec3 position;
-};
-
-struct Light {
-	glm::vec3 color;
-	glm::vec3 position;
-};
+#include "sceneStructs.h"
 
 //Multiplies a cudaMat4 matrix and a vec4
 __host__ __device__ glm::vec3 multiplyMV(cudaMat4 m, glm::vec4 v){

@@ -6,6 +6,7 @@
 #include <cmath>
 #include <cutil_math.h>
 #include <thrust/random.h>
+#include "glm/glm.hpp"
 #include "glm/gtx/vector_access.hpp"
 #include "rasterizeKernels.h"
 #include "rasterizeTools.h"
@@ -17,6 +18,7 @@ float* device_cbo;
 int* device_ibo;
 triangle* primitives;
 Light* light;
+cudaMat4* MVP_matrix;
 
 void checkCUDAError(const char *msg) {
   cudaError_t err = cudaGetLastError();
@@ -132,10 +134,17 @@ __global__ void sendImageToPBO(uchar4* PBOpos, glm::vec2 resolution, glm::vec3* 
 }
 
 //TODO: Implement a vertex shader
-__global__ void vertexShadeKernel(float* vbo, int vbosize){
-  int index = (blockIdx.x * blockDim.x) + threadIdx.x;
-  if(index<vbosize/3){
-  }
+__global__ void vertexShadeKernel(float* vbo, int vbosize, const cudaMat4* MVP_matrix) 
+{
+	int index = (blockIdx.x * blockDim.x) + threadIdx.x;
+	if(index<vbosize/3){
+		glm::vec3 newPoint = 
+			multiplyMV(*MVP_matrix, glm::vec4(vbo[index], vbo[index+1], vbo[index+2], 1.f));
+
+		vbo[index] = newPoint.x;
+		vbo[index+1] = newPoint.y;
+		vbo[index+2] = newPoint.z;
+	}
 }
 
 //TODO: Implement primative assembly
@@ -175,7 +184,10 @@ __global__ void render(glm::vec2 resolution, fragment* depthbuffer, glm::vec3* f
 }
 
 // Wrapper for the __global__ call that sets up the kernel calls and does a ton of memory management
-void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float* vbo, int vbosize, float* cbo, int cbosize, int* ibo, int ibosize){
+void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, 
+                       float* vbo, int vbosize, float* cbo, int cbosize, int* ibo, int ibosize,
+					   const cudaMat4* hostMVP_mat)
+{
 
   // set up crucial magic
   int tileSize = 8;
@@ -225,13 +237,17 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float*
   cudaMalloc((void**)&light, sizeof(Light));
   cudaMemcpy( light, &hostLight, sizeof(Light), cudaMemcpyHostToDevice);
 
+  MVP_matrix = NULL;
+  cudaMalloc((void**)&MVP_matrix, sizeof(cudaMat4));
+  cudaMemcpy( MVP_matrix, &hostMVP_mat, sizeof(cudaMat4), cudaMemcpyHostToDevice);
+
   tileSize = 32;
   int primitiveBlocks = ceil(((float)vbosize/3)/((float)tileSize));
 
   //------------------------------
   //vertex shader
   //------------------------------
-  vertexShadeKernel<<<primitiveBlocks, tileSize>>>(device_vbo, vbosize);
+  vertexShadeKernel<<<primitiveBlocks, tileSize>>>(device_vbo, vbosize, MVP_matrix);
 
   cudaDeviceSynchronize();
   //------------------------------
@@ -274,5 +290,6 @@ void kernelCleanup(){
   cudaFree( framebuffer );
   cudaFree( depthbuffer );
   cudaFree( light );
+  cudaFree( MVP_matrix );
 }
 

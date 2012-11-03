@@ -51,6 +51,10 @@ float* cbo;
 int cbosize;
 int* ibo;
 int ibosize;
+glm::mat4* modelMat;
+glm::mat4* viewMat;
+glm::mat4* projectMat;
+cudaMat4* hostMVP_matrix;
 
 //-------------------------------
 //----------CUDA STUFF-----------
@@ -101,5 +105,6 @@ void cleanupCuda();
 void deletePBO(GLuint* pbo);
 void deleteTexture(GLuint* tex);
 void shut_down(int return_code);
+void cleanMatrices();
 
 #endif

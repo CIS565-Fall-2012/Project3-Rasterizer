@@ -2,6 +2,11 @@
 // Written by Yining Karl Li, Copyright (c) 2012 University of Pennsylvania
 
 #include "main.h"
+#include "glm/gtx/vector_access.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+#include "sceneStructs.h"
+#include "utilities.h"
+
 
 //-------------------------------
 //-------------MAIN--------------
@@ -28,6 +33,25 @@ int main(int argc, char** argv){
     cout << "Usage: mesh=[obj file]" << endl;
     return 0;
   }
+
+  // initialize a model transform matrix(world->model)
+  // currently, support only one object
+  glm::vec3 trans(0.f, 0.f, 0.f);
+  glm::vec3 rotat(0.f, 0.f, 0.f);
+  glm::vec3 scale(2.f, 2.f, 2.f);
+  modelMat = new glm::mat4(utilityCore::buildTransformationMatrix(trans, rotat, scale));
+
+  // initialize a default camera(eye)
+  Eye eye;
+  eye.fovy = 45.f;
+  glm::set(eye.position, 0.f, 0.f, 12.f);
+  glm::set(eye.up, 0.f, 1.f, 0.f);
+  viewMat = new glm::mat4(glm::lookAt(eye.position, glm::vec3(0.f, 0.f, 0.f), eye.up));
+
+  // initialize a perspective projection matrix
+  projectMat = new glm::mat4(glm::perspective(eye.fovy, (float)width/height, 0.1f, 100.f));
+
+  hostMVP_matrix = new cudaMat4(utilityCore::glmMat4ToCudaMat4(*projectMat * *viewMat * *modelMat));
 
   frame = 0;
   seconds = time (NULL);
@@ -75,6 +99,7 @@ int main(int argc, char** argv){
     glutMainLoop();
   #endif
   kernelCleanup();
+  cleanMatrices();
   return 0;
 }
 
@@ -99,8 +124,13 @@ void runCuda(){
   ibo = mesh->getIBO();
   ibosize = mesh->getIBOsize();
 
+  // calculate MVP matrix
+  *hostMVP_matrix = utilityCore::glmMat4ToCudaMat4(*projectMat * *viewMat * *modelMat);
+
   cudaGLMapBufferObject((void**)&dptr, pbo);
-  cudaRasterizeCore(dptr, glm::vec2(width, height), frame, vbo, vbosize, cbo, cbosize, ibo, ibosize);
+  cudaRasterizeCore(dptr, glm::vec2(width, height), frame, 
+	                vbo, vbosize, cbo, cbosize, ibo, ibosize,
+					hostMVP_matrix);
   cudaGLUnmapBufferObject(pbo);
 
   vbo = NULL;
@@ -351,4 +381,12 @@ void shut_down(int return_code){
   glfwTerminate();
   #endif
   exit(return_code);
+}
+
+void cleanMatrices()
+{
+	delete modelMat;
+	delete viewMat;
+	delete projectMat;
+	delete hostMVP_matrix;
 }
