@@ -19,6 +19,7 @@ int* device_ibo;
 triangle* primitives;
 Light* light;
 cudaMat4* MVP_matrix;
+int* fragLocks;
 
 void checkCUDAError(const char *msg) {
   cudaError_t err = cudaGetLastError();
@@ -168,11 +169,73 @@ __global__ void primitiveAssemblyKernel(float* vbo, int vbosize, float* cbo, int
   }
 }
 
+__host__ __device__ glm::vec2 convertPixel2NormalCoord(int pixelX, int pixelY, glm::vec2 resolution)
+{
+	glm::vec2 normalPoint;
+	normalPoint.x = (2*pixelX + 1 - resolution.x)/resolution.x;
+	normalPoint.y = -(2*pixelX + 1 - resolution.x)/resolution.x;
+
+	return normalPoint;
+}
+
 //TODO: Implement a rasterization method, such as scanline.
-__global__ void rasterizationKernel(triangle* primitives, int primitivesCount, fragment* depthbuffer, glm::vec2 resolution){
-  int index = (blockIdx.x * blockDim.x) + threadIdx.x;
-  if(index<primitivesCount){
-  }
+__global__ void rasterizationKernel(const triangle* primitives, int primitivesCount, fragment* depthbuffer, glm::vec2 resolution,
+									int* fragLocks)
+{
+	int index = (blockIdx.x * blockDim.x) + threadIdx.x;
+	if(index<primitivesCount){
+		triangle targetTriangle = primitives[index];
+
+		// find the rounding box in the pixel coordinates
+		glm::vec3 minPoint, maxPoint;
+		getAABBForTriangle(targetTriangle, minPoint, maxPoint);
+
+		int minPixel_X = min((int)floor((minPoint.x + 1)*resolution.x/2), (int)resolution.x - 1);
+		int maxPixel_X = min((int)floor((maxPoint.x + 1)*resolution.x/2), (int)resolution.x - 1);
+		int minPixel_Y = min((int)floor((-minPoint.y + 1)*resolution.y/2), (int)resolution.y - 1);
+		int maxPixel_Y = min((int)floor((-maxPoint.y + 1)*resolution.y/2), (int)resolution.y - 1);
+
+		glm::vec2 normalPoint;
+		glm::vec3 baryCoord;
+		fragment tempFragment;
+		int pixIdx;
+		// for each pixel point
+		for (int y = minPixel_Y; y <= maxPixel_Y; y++) {
+			pixIdx = y*(int)resolution.x + minPixel_X;
+			for (int x = minPixel_X; x <= maxPixel_X; x++) {
+				// detect an intersection in the triangle
+				normalPoint = convertPixel2NormalCoord(x, y, resolution);
+				baryCoord = calculateBarycentricCoordinate(targetTriangle, normalPoint);
+				if (isBarycentricCoordInBounds(baryCoord)) { // inside triangle
+					tempFragment.color =
+						baryCoord.x*targetTriangle.c0
+						+ baryCoord.y*targetTriangle.c1
+						+ baryCoord.z*targetTriangle.c2;
+
+					tempFragment.normal = glm::normalize(
+							glm::cross(targetTriangle.p1 - targetTriangle.p0, 
+										targetTriangle.p2 - targetTriangle.p0));
+
+					glm::set(tempFragment.position, 
+						normalPoint.x, 
+						normalPoint.y, 
+						getZAtCoordinate(baryCoord, targetTriangle));
+
+					// get a lock for the pixel (x, y)
+					do {} while (atomicCAS(&fragLocks[pixIdx], 0, 1));
+					// start of critical section
+					if (depthbuffer[pixIdx].position.z < tempFragment.position.z) {
+						memcpy(&depthbuffer[pixIdx], &tempFragment, sizeof(fragment));
+					}
+					// end of critical section
+					__threadfence();
+					fragLocks[pixIdx] = 0;
+				}
+
+				pixIdx++;
+			} // for x
+		} // for y
+	}
 }
 
 //TODO: Implement a fragment shader
@@ -254,6 +317,10 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame,
   cudaMalloc((void**)&MVP_matrix, sizeof(cudaMat4));
   cudaMemcpy( MVP_matrix, &hostMVP_mat, sizeof(cudaMat4), cudaMemcpyHostToDevice);
 
+  fragLocks = NULL;
+  cudaMalloc((void**)&fragLocks, (int)resolution.x*(int)resolution.y*sizeof(int));
+  cudaMemset(fragLocks, 0, (int)resolution.x*(int)resolution.y*sizeof(int));
+
   tileSize = 32;
   int primitiveBlocks = ceil(((float)vbosize/3)/((float)tileSize));
 
@@ -273,7 +340,7 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame,
   //------------------------------
   //rasterization
   //------------------------------
-  rasterizationKernel<<<primitiveBlocks, tileSize>>>(primitives, ibosize/3, depthbuffer, resolution);
+  rasterizationKernel<<<primitiveBlocks, tileSize>>>(primitives, ibosize/3, depthbuffer, resolution, fragLocks);
 
   cudaDeviceSynchronize();
   //------------------------------
@@ -304,5 +371,6 @@ void kernelCleanup(){
   cudaFree( depthbuffer );
   cudaFree( light );
   cudaFree( MVP_matrix );
+  cudaFree( fragLocks );
 }
 
