@@ -14,6 +14,7 @@ fragment* depthbuffer;
 float* device_vbo;
 float* device_cbo;
 int* device_ibo;
+int* lock;
 triangle* primitives;
 
 void checkCUDAError(const char *msg) {
@@ -83,11 +84,12 @@ __global__ void clearImage(glm::vec2 resolution, glm::vec3* image, glm::vec3 col
 }
 
 //Kernel that clears a given fragment buffer with a given fragment
-__global__ void clearDepthBuffer(glm::vec2 resolution, fragment* buffer, fragment frag){
+__global__ void clearDepthBuffer(glm::vec2 resolution, fragment* buffer, fragment frag, int* lock){
     int x = (blockIdx.x * blockDim.x) + threadIdx.x;
     int y = (blockIdx.y * blockDim.y) + threadIdx.y;
     int index = x + (y * resolution.x);
-    if(x<=resolution.x && y<=resolution.y){
+	if(x<=resolution.x && y<=resolution.y){
+	  lock[index] = 0;
       fragment f = frag;
       f.position.x = x;
       f.position.y = y;
@@ -181,7 +183,7 @@ __global__ void primitiveAssemblyKernel(float* vbo, int vbosize, float* cbo, int
 }
 
 //TODO: Implement a rasterization method, such as scanline.
-__global__ void rasterizationKernel(triangle* primitives, int primitivesCount, fragment* depthbuffer, glm::vec2 resolution){
+__global__ void rasterizationKernel(triangle* primitives, int primitivesCount, fragment* depthbuffer, int * lock, glm::vec2 resolution){
   int index = (blockIdx.x * blockDim.x) + threadIdx.x;
   if(index<primitivesCount){
 	  glm::vec2 p0,p1,p2;
@@ -228,12 +230,17 @@ __global__ void rasterizationKernel(triangle* primitives, int primitivesCount, f
 				  float depth = primitives[index].p0.z*lambdaA + 
 								primitives[index].p1.z*lambdaB + 
 								primitives[index].p2.z*(1-lambdaA-lambdaB);
-				  if( depth > depthbuffer[(int)(x+resolution.x*y)].position.z )
+				  bool inLoop = true;
+				  while( inLoop )
 				  {
-					  depthbuffer[(int)(x+resolution.x*y)].position.z = depth;
-					  depthbuffer[(int)(x+resolution.x*y)].color = primitives[index].c0*lambdaA + 
-																   primitives[index].c1*lambdaB + 
-																   primitives[index].c2*(1-lambdaA-lambdaB);
+					  if( depth > depthbuffer[(int)(x+resolution.x*y)].position.z )
+					  {
+						  depthbuffer[(int)(x+resolution.x*y)].position.z = depth;
+						  depthbuffer[(int)(x+resolution.x*y)].color = primitives[index].c0*lambdaA + 
+																	   primitives[index].c1*lambdaB + 
+																	   primitives[index].c2*(1-lambdaA-lambdaB);
+					  }
+					  inLoop = false;
 				  }
 			  }
 		  }
@@ -286,6 +293,8 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float*
   //set up depthbuffer
   depthbuffer = NULL;
   cudaMalloc((void**)&depthbuffer, (int)resolution.x*(int)resolution.y*sizeof(fragment));
+  lock = NULL;
+  cudaMalloc((void**)&lock, (int)resolution.x*(int)resolution.y*sizeof(int));
 
   //kernel launches to black out accumulated/unaccumlated pixel buffers and clear our scattering states
   clearImage<<<fullBlocksPerGrid, threadsPerBlock>>>(resolution, framebuffer, glm::vec3(0,0,0));
@@ -294,7 +303,7 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float*
   frag.color = glm::vec3(0,0,0);
   frag.normal = glm::vec3(0,0,0);
   frag.position = glm::vec3(0,0,-10000);
-  clearDepthBuffer<<<fullBlocksPerGrid, threadsPerBlock>>>(resolution, depthbuffer,frag);
+  clearDepthBuffer<<<fullBlocksPerGrid, threadsPerBlock>>>(resolution, depthbuffer,frag,lock);
 
   //------------------------------
   //memory stuff
@@ -333,7 +342,7 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float*
   //------------------------------
   //rasterization
   //------------------------------
-  rasterizationKernel<<<primitiveBlocks, tileSize>>>(primitives, ibosize/3, depthbuffer, resolution);
+  rasterizationKernel<<<primitiveBlocks, tileSize>>>(primitives, ibosize/3, depthbuffer, lock, resolution);
 
   cudaDeviceSynchronize();
   checkCUDAError("Rasterizer");
