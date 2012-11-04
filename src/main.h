@@ -62,31 +62,28 @@ int nbosize;
 
 int width=800; int height=800;
 
-/*
-glm::vec3 CameraPosition = glm::vec3 (0, 7.5, 15.0);
-
-glm::vec3 LookAtCenter = glm::vec3(0.0, 0.5, 0.0);
-glm::mat4 ViewMatrix = glm::lookAt(CameraPosition, LookAtCenter, glm::vec3(0.0, 1.0, 0.0));
-
-glm::vec4 ViewPort = glm::vec4(0.0, 0.0, width, height);
-
-glm::mat4 Projection = glm::perspective(30.0f, static_cast<float>(width) / static_cast<float>(height), 0.1f, 50.0f);
-*/
+//////////////////////////////Specify Mesh Model Matrix Values Here///////////////////////////////////
 glm::vec3 mTranslate = glm::vec3(0.0, 0.0, 0.0);
 glm::vec3 mRotate = glm::vec3(0.0, 0.0, 0.0);
 glm::vec3 mScale = glm::vec3(1.0, 1.0, 1.0);
 glm::mat4 modelMatrix = utilityCore::buildTransformationMatrix(mTranslate, mRotate, mScale);
+/////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
+///////////////////////////////Camera Matrices and Vectoes///////////////////////////////////////////
 glm::vec3 CameraPosition;
 glm::mat4 ViewMatrix;
 glm::mat4 Projection;
 glm::vec4 ViewPort;
+/////////////////////////////////////////////////////////////////////////////////////////////////////
 
-glm::vec3 LightPosition = glm::vec3(0.0, 10.0, 10.0);
+
+//////////////////////////////Specify Light Values Here///////////////////////////////////
+glm::vec3 LightPosition = glm::vec3(10.0, 2.0, 0.0);
 glm::vec3 LightColor	= glm::vec3(1.0, 1.0, 1.0);
-glm::vec3 AmbientColor	= glm::vec3(0.2, 0.2, 0.2);
+glm::vec3 AmbientColor	= glm::vec3(0.1, 0.1, 0.1);
 float specularCoefficient = 20.0f;
-
+/////////////////////////////////////////////////////////////////////////////////////////
 
 glm::vec3  Camera::dfltEye(0.0, 7.5, 15.0);
 glm::vec3  Camera::dfltUp(0.0, 1.0, 0.0);

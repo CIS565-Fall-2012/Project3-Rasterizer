@@ -73,7 +73,7 @@ int main(int argc, char** argv){
 	glutDisplayFunc(display);
 	glutKeyboardFunc(keyboard);
 	glutMouseFunc(onMouseCb);
-    glutMotionFunc(onMouseMotionCb); 
+	glutMotionFunc(onMouseMotionCb); 
 
 	glutMainLoop();
   #endif
@@ -84,9 +84,13 @@ int main(int argc, char** argv){
 //-------------------------------
 //---------RUNTIME STUFF---------
 //-------------------------------
+
 void initCamera()
 {
-	theCamera.dfltEye = glm::vec3(0.0, 7.5, 15.0);
+	//-------------------------------
+	//Initialize Camera Values here
+	//-------------------------------
+	theCamera.dfltEye = glm::vec3(0.0, 3, 15.0);
 	theCamera.dfltUp = glm::vec3(0.0, 1.0, 0.0);
 	theCamera.dfltLook = glm::vec3(0.0, 0.5, 0.0);
 	theCamera.dfltVfov = 30.0;
@@ -94,9 +98,11 @@ void initCamera()
 	theCamera.dfltNear = 0.1;
 	theCamera.dfltFar = 100.0;
 	theCamera.dfltSpeed = 0.1;
-	theCamera.dfltTurnRate = 1.0*(M_PI/180.0);
-	theCamera.reset();
+	theCamera.dfltTurnRate = 0.5*(M_PI/180.0);
 	theCamera.setViewport(glm::vec4(0,0,width, height));
+	//-------------------------------
+	
+	theCamera.reset();
 	theCamera.set(theCamera.dfltEye, theCamera.dfltLook, theCamera.dfltUp);
 	theCamera.setProjection();
 	setMatrices();
@@ -111,36 +117,38 @@ void setMatrices()
 }
 
 void runCuda(){
-  // Map OpenGL buffer object for writing from CUDA on a single GPU
-  // No data is moved (Win & Linux). When mapped to CUDA, OpenGL should not use this buffer
-  dptr=NULL;
-  //modelMatrix = glm::rotate(modelMatrix, 5.0f, glm::vec3(0.0f, 1.0f, 0.0f));
-  vbo = mesh->getVBO();
-  vbosize = mesh->getVBOsize();
+	// Map OpenGL buffer object for writing from CUDA on a single GPU
+	// No data is moved (Win & Linux). When mapped to CUDA, OpenGL should not use this buffer
+	dptr=NULL;
 
-  nbo = mesh->getNBO();
-  nbosize = mesh->getNBOsize();
+	vbo = mesh->getVBO();
+	vbosize = mesh->getVBOsize();
 
-  float newcbo[] = {1.0, 1.0, 1.0, 
+	nbo = mesh->getNBO();
+	nbosize = mesh->getNBOsize();
+
+	float newcbo[] = {1.0, 1.0, 1.0, 
 					1.0, 1.0, 1.0, 
 					1.0, 1.0, 1.0};
-  cbo = newcbo;
-  cbosize = 9;
+	cbo = newcbo;
+	cbosize = 9;
 
-  ibo = mesh->getIBO();
-  ibosize = mesh->getIBOsize();
+	ibo = mesh->getIBO();
+	ibosize = mesh->getIBOsize();
 
-  cudaGLMapBufferObject((void**)&dptr, pbo);
-  cudaRasterizeCore(dptr, glm::vec2(width, height), frame, vbo, vbosize, nbo, nbosize, cbo, cbosize, ibo, ibosize, modelMatrix, ViewMatrix, Projection, ViewPort, CameraPosition, LightPosition, LightColor, AmbientColor, specularCoefficient);
-  cudaGLUnmapBufferObject(pbo);
-  //drawGrid();
-  vbo = NULL;
-  cbo = NULL;
-  ibo = NULL;
+	cudaGLMapBufferObject((void**)&dptr, pbo);
+	
+	cudaRasterizeCore(dptr, glm::vec2(width, height), frame, vbo, vbosize, nbo, nbosize, cbo, cbosize, ibo, ibosize, modelMatrix, ViewMatrix, Projection, ViewPort, CameraPosition, LightPosition, LightColor, AmbientColor, specularCoefficient);
+	
+	cudaGLUnmapBufferObject(pbo);
 
-  frame++;
-  fpstracker++;
+	vbo = NULL;
+	cbo = NULL;
+	ibo = NULL;
+	nbo = NULL;
 
+	frame++;
+	fpstracker++;
 }
 
 #ifdef __APPLE__
@@ -178,15 +186,15 @@ void runCuda(){
 
 #else
 
-  void display(){
+void display(){
 	runCuda();
 	time_t seconds2 = time (NULL);
 
 	if(seconds2-seconds >= 1){
 
-	  fps = fpstracker/(seconds2-seconds);
-	  fpstracker = 0;
-	  seconds = seconds2;
+		fps = fpstracker/(seconds2-seconds);
+		fpstracker = 0;
+		seconds = seconds2;
 
 	}
 
@@ -202,33 +210,10 @@ void runCuda(){
 
 	// VAO, shader program, and texture already bound
 	glDrawElements(GL_TRIANGLES, 6,  GL_UNSIGNED_SHORT, 0);
-	//DrawAxes();
-	//DrawGrid();
-	//Draw Grid Stuff
-	/*glPushAttrib(GL_LIGHTING_BIT | GL_LINE_BIT);
-	glDisable(GL_LIGHTING);
-	glColor3f(0.25, 0.25, 0.25);
-
-	glBegin(GL_LINES);
-	for (int i = 0; i <= width; i+=100)
-	{
-		glVertex2f(i, 0);
-		glVertex2f(i, height);
-	}
-
-	for (int i = 0; i <= height; i+=100)
-	{
-		glVertex2f(0, i);
-		glVertex2f(width, i);
-	}
-
-	glEnd();
-	glPopAttrib();*/
-	//////////////////
-
+	
 	glutPostRedisplay();
 	glutSwapBuffers();
-  }
+}
 
 void keyboard(unsigned char key, int x, int y)
 {
@@ -241,7 +226,7 @@ void keyboard(unsigned char key, int x, int y)
 		case 'y':
 			modelMatrix = glm::rotate(modelMatrix, 5.0f, glm::vec3(0.0f, 1.0f, 0.0f));
 			break;
-
+//Rotations
 		case 'Y':
 			modelMatrix = glm::rotate(modelMatrix, -5.0f, glm::vec3(0.0f, 1.0f, 0.0f));
 			break;
@@ -261,6 +246,54 @@ void keyboard(unsigned char key, int x, int y)
 		case 'Z':
 			modelMatrix = glm::rotate(modelMatrix, -5.0f, glm::vec3(0.0f, 0.0f, 1.0f));
 			break;
+//Translations
+		case 'a':
+			modelMatrix = glm::translate(modelMatrix, glm::vec3(-0.5, 0.0, 0.0));
+			break;
+
+		case 'd':
+			modelMatrix = glm::translate(modelMatrix, glm::vec3(+0.5, 0.0, 0.0));
+			break;
+		
+		case 'w':
+			modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0, +0.5, 0.0));
+			break;
+		
+		case 's':
+			modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0, -0.5, 0.0));
+			break;
+		
+		case 'q':
+			modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0, 0.0, +0.5));
+			break;
+		
+		case 'e':
+			modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0, 0.0, -0.5));
+			break;	
+//Scales
+		case 'j':
+			modelMatrix = glm::scale(modelMatrix, glm::vec3(2.0, 1.0, 1.0));
+			break;
+
+		case 'J':
+			modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5, 1.0, 2.0));
+			break;
+		
+		case 'k':
+			modelMatrix = glm::scale(modelMatrix, glm::vec3(1.0, 2.0, 1.0));
+			break;
+		
+		case 'K':
+			modelMatrix = glm::scale(modelMatrix, glm::vec3(1.0, 0.5, 1.0));
+			break;
+		
+		case 'l':
+			modelMatrix = glm::scale(modelMatrix, glm::vec3(1.0, 1.0, 2.0));
+			break;
+		
+		case 'L':
+			modelMatrix = glm::scale(modelMatrix, glm::vec3(1.0, 1.0, 0.5));
+			break;	
 	}
 }
 
@@ -273,27 +306,34 @@ void onMouseMotionCb(int x, int y)
 
    if (theButtonState == GLUT_LEFT_BUTTON)  // Rotate
    {
-      if (moveLeftRight && deltaX > 0) theCamera.orbitLeft(deltaX);
-      else if (moveLeftRight && deltaX < 0) theCamera.orbitRight(-deltaX);
-      else if (moveUpDown && deltaY > 0) theCamera.orbitUp(deltaY);
-      else if (moveUpDown && deltaY < 0) theCamera.orbitDown(-deltaY);
+	  if (moveLeftRight && deltaX > 0) theCamera.orbitLeft(deltaX);
+	  else if (moveLeftRight && deltaX < 0) theCamera.orbitRight(-deltaX);
+	  else if (moveUpDown && deltaY > 0) theCamera.orbitUp(deltaY);
+	  else if (moveUpDown && deltaY < 0) theCamera.orbitDown(-deltaY);
    }
    else if (theButtonState == GLUT_MIDDLE_BUTTON) // Zoom
    {
-       if (theModifierState & GLUT_ACTIVE_ALT) // camera move
-       {
-            if (moveLeftRight && deltaX > 0) theCamera.moveLeft(deltaX);
-            else if (moveLeftRight && deltaX < 0) theCamera.moveRight(-deltaX);
-            else if (moveUpDown && deltaY > 0) theCamera.moveUp(deltaY);
-            else if (moveUpDown && deltaY < 0) theCamera.moveDown(-deltaY);
-       }
-       else
-       {
-           if (moveUpDown && deltaY > 0) theCamera.moveForward(deltaY);
-           else if (moveUpDown && deltaY < 0) theCamera.moveBack(-deltaY);
-       }
+	   if (theModifierState & GLUT_ACTIVE_ALT) // camera move   
+	   {
+			if (moveLeftRight && deltaX > 0) theCamera.moveLeft(deltaX);
+			else if (moveLeftRight && deltaX < 0) theCamera.moveRight(-deltaX);
+			else if (moveUpDown && deltaY > 0) theCamera.moveUp(deltaY);
+			else if (moveUpDown && deltaY < 0) theCamera.moveDown(-deltaY);
+	   }
+	   else
+	   {
+		   if (moveUpDown && deltaY > 0) theCamera.moveForward(deltaY);
+		   else if (moveUpDown && deltaY < 0) theCamera.moveBack(-deltaY);
+	   }
 
-   }    
+   }
+   else if (theButtonState == GLUT_RIGHT_BUTTON) // Zoom
+   {
+	   if (theModifierState & GLUT_ACTIVE_CTRL || theModifierState & GLUT_ACTIVE_ALT) // camera move   
+	   {
+		   initCamera();
+	   }
+   }
  
    lastX = x;
    lastY = y;
@@ -303,10 +343,10 @@ void onMouseMotionCb(int x, int y)
 
 void onMouseCb(int button, int state, int x, int y)
 {
-   //theButtonState = button;
-   //theModifierState = glutGetModifiers();
-   //lastX = x;
-   //lastY = y;
+   theButtonState = button;
+   theModifierState = glutGetModifiers();
+   lastX = x;
+   lastY = y;
    //glutSetMenu(theMenu);
 }
 
@@ -323,9 +363,19 @@ void onMouseCb(int button, int state, int x, int y)
 
 	 glMatrixMode(GL_MODELVIEW);
 	 glLoadIdentity();
-	 glRasterPos2f(0.01, 0.01);
-	 
+	 glRasterPos2f(0.1, 0.1);
+	 char info[1024];
+	 sprintf(info, "Test Run");
+	 //sprintf(info, "Framerate: %3.1f  |  Frame: %u  |  %s", 
+	 //    theFpsTracker.fpsAverage(), theSmokeSim.getTotalFrames(),
+	 //    theSmokeSim.isRecording()? "Recording..." : "");
+	 //FrameNum = theSmokeSim.getTotalFrames();
+	 for (unsigned int i = 0; i < strlen(info); i++)
+	 {
+		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, info[i]);
+	 }
   glPopAttrib();
+  glutPostRedisplay();
 }
 
 void DrawAxes()
@@ -336,18 +386,19 @@ void DrawAxes()
 		glLineWidth(2.0); 
 		glBegin(GL_LINES);
 			glColor3f(1.0, 0.0, 0.0);
-			glVertex3f(0.0, 0.0, 0.0);
-			glVertex3f(2.0, 0.0, 0.0);
-
-			glColor3f(0.0, 1.0, 0.0);
-			glVertex3f(0.0, 0.0, 0.0);
-			glVertex3f(0.0, 2.0, 0.0);
-
-			glColor3f(0.0, 0.0, 1.0);
-			glVertex3f(0.0, 0.0, 0.0);
 			glVertex3f(0.0, 0.0, 2.0);
+			glVertex3f(2.0, 0.0, 2.0);
+
+			glColor3f(1.0, 0.0, 0.0);
+			glVertex3f(0.0, 0.0, 2.0);
+			glVertex3f(0.0, 2.0, 2.0);
+
+			glColor3f(1.0, 0.0, 0.0);
+			glVertex3f(0.0, 0.0, 2.0);
+			glVertex3f(0.0, 0.0, 4.0);
 		glEnd();
 	glPopAttrib();
+	glutPostRedisplay();
 }
 
 void DrawGrid()

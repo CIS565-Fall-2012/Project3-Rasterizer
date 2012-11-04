@@ -1,4 +1,3 @@
-// Copyright 2009 Aline Normoyle
 
 #ifndef camera_H_
 #define camera_H_
@@ -7,8 +6,7 @@
 #include "GL/gl.h"
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
-//#include "vec.h"
-//#include "matrix.h"
+
 
 #ifndef M_PI
 const double M_PI = 3.14159265358979323846f;		// per CRC handbook, 14th. ed.
@@ -109,7 +107,7 @@ protected:
    // Basis of camera local coord system
    glm::vec3 u; // up
    glm::vec3 v; // v points right
-   glm::vec3 n; // -n points forward
+   glm::vec3 n; // -n points forward -> towards LookAt Point
 
    // Cache useful values
    glm::mat4 myProjMatrix;

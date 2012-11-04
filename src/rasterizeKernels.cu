@@ -219,7 +219,6 @@ __global__ void rasterizationKernel(triangle* primitives, int primitivesCount, f
 
 		//printf("\nMaxPoint %d = %f\t%f\t%f", index, maxPoint.x, maxPoint.y, maxPoint.z);
 		//printf("\nMinPoint %d = %f\t%f\t%f", index, minPoint.x, minPoint.y, minPoint.z);
-		//printf("\n%d\t%d", index, 1);
 		glm::vec3 CPoints[4] = {primitives[index].p0, primitives[index].p1, primitives[index].p2, primitives[index].p0};
 		for(int j = minPoint.y; j <= maxPoint.y; j++)
 		{
@@ -246,7 +245,6 @@ __global__ void rasterizationKernel(triangle* primitives, int primitivesCount, f
 					
 				if(t >=0 && t <= LineLength)
 				{
-					//printf("\n%d\t%d", index, 200);
 					IntersectionPoint = StartPoint + LineUnit * t;
 					if(IntersectionPoint.x < FirstPoint.x)
 						FirstPoint = IntersectionPoint;
@@ -254,7 +252,6 @@ __global__ void rasterizationKernel(triangle* primitives, int primitivesCount, f
 							LastPoint = IntersectionPoint;
 				}
 			}
-			//printf("\n%d\t%d", index, 2);
 			//printf("\nFirstPoint %d = %f\t%f\t%f", index, FirstPoint.x, FirstPoint.y, FirstPoint.z);
 			//printf("\nLastPoint %d = %f\t%f\t%f", index, LastPoint.x, LastPoint.y, LastPoint.z);
 			if(t > 0 && FirstPoint.x < resolution.x && LastPoint.x > 0)
@@ -277,7 +274,6 @@ __global__ void rasterizationKernel(triangle* primitives, int primitivesCount, f
 			
 				float t = 0;
 				int ypix = resolution.y - j;
-				//printf("\n%d\t%d", index, 3);
 				for(int i = 0; i < ScanlineLength; i++)
 				{
 					glm::vec3 SPoint = FirstPoint + (float)i * ScanlineUnit;

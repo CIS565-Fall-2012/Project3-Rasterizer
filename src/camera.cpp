@@ -1,4 +1,3 @@
-// Copyright 2009 Aline Normoyle
 
 #include <assert.h>
 #include <stdio.h>
@@ -10,6 +9,7 @@
 #include <GL/gl.h>
 
 #include "camera.h"
+
 /*
 glm::vec3  Camera::dfltEye(0.0, 0.0, -5.0);
 glm::vec3  Camera::dfltUp(0.0, 1.0, 0.0);
@@ -21,6 +21,7 @@ float Camera::dfltFar = 50.0;
 float Camera::dfltSpeed = 0.1;
 float Camera::dfltTurnRate = 1.0*(M_PI/180.0);
 */
+
 Camera::Camera() 
 {   
    myDir = NONE; myTurnDir = NONE;
@@ -47,25 +48,6 @@ void Camera::reset()
    set(dfltEye, dfltLook, dfltUp);
 }
 
-/*void Camera::draw()
-{
-   glMatrixMode(GL_PROJECTION);
-   glLoadIdentity();
-   gluPerspective(mVfov, mAspect, mNear, mFar);
-
-   float m[16];
-   m[0] = v[0]; m[4] = v[1]; m[8] = v[2];  m[12] = -glm::dot(eye, v); 
-   m[1] = u[0]; m[5] = u[1]; m[9] = u[2];  m[13] = -glm::dot(eye, u); 
-   m[2] = n[0]; m[6] = n[1]; m[10] = n[2]; m[14] = -glm::dot(eye, n); 
-   m[3] = 0.0;  m[7] = 0.0;  m[11] = 0.0;  m[15] = 1.0;
-   glMatrixMode(GL_MODELVIEW);
-   glLoadMatrixf(m); 
-
-   glGetDoublev(GL_MODELVIEW_MATRIX, myModelMatrix);
-   glGetDoublev(GL_PROJECTION_MATRIX, myProjMatrix);
-   glGetIntegerv(GL_VIEWPORT, myViewport);
-}
-*/
 const glm::vec3& Camera::getUp() const
 {
    return u;
@@ -155,15 +137,6 @@ void Camera::set(const glm::vec3& eyepos, const glm::vec3& look, const glm::vec3
    v = glm::normalize(v);
    n = glm::normalize(n);
 }
-
-/*void Camera::print()
-{
-   eye.Print("EYE: ");
-   v.Print("RIGHT: ");
-   u.Print("UP: ");
-   n.Print("N: ");
-   printf("-----------------------\n");
-}*/
 
 void Camera::move(float dV, float dU, float dN)
 {
@@ -291,13 +264,14 @@ void Camera::turnDown(int scale) // rotate around v
    myTurnDir = TD; 
    turn(n, u, -mTurnRate*scale);
 }
-/*
+
+/* UNUSED FUNCTIONS
 bool Camera::screenToWorld(int screenX, int screenY, glm::vec3& worldCoords)
 {
    double x, y, z;
    GLint result = gluUnProject(screenX, screenY, 0.0, 
-                               myModelMatrix, myProjMatrix, myViewport, 
-                               &x, &y, &z);
+							   myModelMatrix, myProjMatrix, myViewport, 
+							   &x, &y, &z);
 
    worldCoords = glm::vec3(x, y, z);
    return result == GL_TRUE;
@@ -307,8 +281,8 @@ bool Camera::worldToScreen(const glm::vec3& worldCoords, int& screenX, int& scre
 {
    double x, y, z;
    GLint result = gluProject(worldCoords[0], worldCoords[1], worldCoords[2],
-                             myModelMatrix, myProjMatrix, myViewport, 
-                             &x, &y, &z);
+							 myModelMatrix, myProjMatrix, myViewport, 
+							 &x, &y, &z);
 
    screenX = (int) x;
    screenY = (int) y;
@@ -321,5 +295,34 @@ math::matrix<double> Camera::cameraToWorldMatrix()
    tmp.Set(4, 4, myModelMatrix);
    tmp = tmp.Inv();
    return tmp;
+}
+
+void Camera::draw()
+{
+   glMatrixMode(GL_PROJECTION);
+   glLoadIdentity();
+   gluPerspective(mVfov, mAspect, mNear, mFar);
+
+   float m[16];
+   m[0] = v[0]; m[4] = v[1]; m[8] = v[2];  m[12] = -glm::dot(eye, v); 
+   m[1] = u[0]; m[5] = u[1]; m[9] = u[2];  m[13] = -glm::dot(eye, u); 
+   m[2] = n[0]; m[6] = n[1]; m[10] = n[2]; m[14] = -glm::dot(eye, n); 
+   m[3] = 0.0;  m[7] = 0.0;  m[11] = 0.0;  m[15] = 1.0;
+   glMatrixMode(GL_MODELVIEW);
+   glLoadMatrixf(m); 
+
+   glGetDoublev(GL_MODELVIEW_MATRIX, myModelMatrix);
+   glGetDoublev(GL_PROJECTION_MATRIX, myProjMatrix);
+   glGetIntegerv(GL_VIEWPORT, myViewport);
+}
+
+
+/*void Camera::print()
+{
+   eye.Print("EYE: ");
+   v.Print("RIGHT: ");
+   u.Print("UP: ");
+   n.Print("N: ");
+   printf("-----------------------\n");
 }
 */

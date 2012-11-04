@@ -19,9 +19,6 @@ struct triangle {
   glm::vec3 n0;
   glm::vec3 n1;
   glm::vec3 n2;
-  //glm::vec3 orig_p0;
-  //glm::vec3 orig_p1;
-  //glm::vec3 orig_p2;
 };
 
 struct fragment{
