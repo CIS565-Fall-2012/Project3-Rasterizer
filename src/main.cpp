@@ -7,11 +7,6 @@
 //-------------MAIN--------------
 //-------------------------------
 
-void initCamera()
-{
-	
-}
-
 int main(int argc, char** argv){
 
   bool loadedScene = false;
@@ -48,6 +43,7 @@ int main(int argc, char** argv){
   init();
   #else
   init(argc, argv);
+  initCamera();
   #endif
 
   initCuda();
@@ -76,6 +72,8 @@ int main(int argc, char** argv){
   #else
 	glutDisplayFunc(display);
 	glutKeyboardFunc(keyboard);
+	glutMouseFunc(onMouseCb);
+    glutMotionFunc(onMouseMotionCb); 
 
 	glutMainLoop();
   #endif
@@ -86,18 +84,46 @@ int main(int argc, char** argv){
 //-------------------------------
 //---------RUNTIME STUFF---------
 //-------------------------------
+void initCamera()
+{
+	theCamera.dfltEye = glm::vec3(0.0, 7.5, 15.0);
+	theCamera.dfltUp = glm::vec3(0.0, 1.0, 0.0);
+	theCamera.dfltLook = glm::vec3(0.0, 0.5, 0.0);
+	theCamera.dfltVfov = 30.0;
+	theCamera.dfltAspect = width / height;
+	theCamera.dfltNear = 0.1;
+	theCamera.dfltFar = 100.0;
+	theCamera.dfltSpeed = 0.1;
+	theCamera.dfltTurnRate = 1.0*(M_PI/180.0);
+	theCamera.reset();
+	theCamera.setViewport(glm::vec4(0,0,width, height));
+	theCamera.set(theCamera.dfltEye, theCamera.dfltLook, theCamera.dfltUp);
+	theCamera.setProjection();
+	setMatrices();
+}
+
+void setMatrices()
+{
+	CameraPosition = theCamera.getPosition();
+	ViewMatrix = theCamera.getViewMatrix();
+	Projection = theCamera.getProjection();
+	ViewPort = theCamera.getViewport();
+}
 
 void runCuda(){
   // Map OpenGL buffer object for writing from CUDA on a single GPU
   // No data is moved (Win & Linux). When mapped to CUDA, OpenGL should not use this buffer
   dptr=NULL;
-  modelMatrix = glm::rotate(modelMatrix, 5.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+  //modelMatrix = glm::rotate(modelMatrix, 5.0f, glm::vec3(0.0f, 1.0f, 0.0f));
   vbo = mesh->getVBO();
   vbosize = mesh->getVBOsize();
 
-  float newcbo[] = {0.4, 0.4, 0.4, 
-					0.4, 0.4, 0.4, 
-					0.4, 0.4, 0.4};
+  nbo = mesh->getNBO();
+  nbosize = mesh->getNBOsize();
+
+  float newcbo[] = {1.0, 1.0, 1.0, 
+					1.0, 1.0, 1.0, 
+					1.0, 1.0, 1.0};
   cbo = newcbo;
   cbosize = 9;
 
@@ -105,7 +131,7 @@ void runCuda(){
   ibosize = mesh->getIBOsize();
 
   cudaGLMapBufferObject((void**)&dptr, pbo);
-  cudaRasterizeCore(dptr, glm::vec2(width, height), frame, vbo, vbosize, cbo, cbosize, ibo, ibosize, modelMatrix, ViewMatrix, Projection, ViewPort, CameraPosition);
+  cudaRasterizeCore(dptr, glm::vec2(width, height), frame, vbo, vbosize, nbo, nbosize, cbo, cbosize, ibo, ibosize, modelMatrix, ViewMatrix, Projection, ViewPort, CameraPosition, LightPosition, LightColor, AmbientColor, specularCoefficient);
   cudaGLUnmapBufferObject(pbo);
   //drawGrid();
   vbo = NULL;
@@ -204,15 +230,85 @@ void runCuda(){
 	glutSwapBuffers();
   }
 
-  void keyboard(unsigned char key, int x, int y)
-  {
+void keyboard(unsigned char key, int x, int y)
+{
 	switch (key) 
 	{
-	   case(27):
-		 shut_down(1);    
-		 break;
+		case(27):
+			shut_down(1);    
+			break;
+
+		case 'y':
+			modelMatrix = glm::rotate(modelMatrix, 5.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+			break;
+
+		case 'Y':
+			modelMatrix = glm::rotate(modelMatrix, -5.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+			break;
+
+		case 'x':
+			modelMatrix = glm::rotate(modelMatrix, 5.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+			break;
+
+		case 'X':
+			modelMatrix = glm::rotate(modelMatrix, -5.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+			break;
+
+		case 'z':
+			modelMatrix = glm::rotate(modelMatrix, 5.0f, glm::vec3(0.0f, 0.0f, 1.0f));
+			break;
+
+		case 'Z':
+			modelMatrix = glm::rotate(modelMatrix, -5.0f, glm::vec3(0.0f, 0.0f, 1.0f));
+			break;
 	}
-  }
+}
+
+void onMouseMotionCb(int x, int y)
+{
+   int deltaX = lastX - x;
+   int deltaY = lastY - y;
+   bool moveLeftRight = abs(deltaX) > abs(deltaY);
+   bool moveUpDown = !moveLeftRight;
+
+   if (theButtonState == GLUT_LEFT_BUTTON)  // Rotate
+   {
+      if (moveLeftRight && deltaX > 0) theCamera.orbitLeft(deltaX);
+      else if (moveLeftRight && deltaX < 0) theCamera.orbitRight(-deltaX);
+      else if (moveUpDown && deltaY > 0) theCamera.orbitUp(deltaY);
+      else if (moveUpDown && deltaY < 0) theCamera.orbitDown(-deltaY);
+   }
+   else if (theButtonState == GLUT_MIDDLE_BUTTON) // Zoom
+   {
+       if (theModifierState & GLUT_ACTIVE_ALT) // camera move
+       {
+            if (moveLeftRight && deltaX > 0) theCamera.moveLeft(deltaX);
+            else if (moveLeftRight && deltaX < 0) theCamera.moveRight(-deltaX);
+            else if (moveUpDown && deltaY > 0) theCamera.moveUp(deltaY);
+            else if (moveUpDown && deltaY < 0) theCamera.moveDown(-deltaY);
+       }
+       else
+       {
+           if (moveUpDown && deltaY > 0) theCamera.moveForward(deltaY);
+           else if (moveUpDown && deltaY < 0) theCamera.moveBack(-deltaY);
+       }
+
+   }    
+ 
+   lastX = x;
+   lastY = y;
+   setMatrices();
+   glutPostRedisplay();
+}
+
+void onMouseCb(int button, int state, int x, int y)
+{
+   //theButtonState = button;
+   //theModifierState = glutGetModifiers();
+   //lastX = x;
+   //lastY = y;
+   //glutSetMenu(theMenu);
+}
 
  void DrawOverlay()
 {

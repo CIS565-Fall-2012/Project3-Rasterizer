@@ -27,6 +27,7 @@
 #include "utilities.h"
 #include "ObjCore/objloader.h"
 #include "glm/gtc/matrix_transform.hpp"
+#include "camera.h"
 
 using namespace std;
 
@@ -52,18 +53,17 @@ float* cbo;
 int cbosize;
 int* ibo;
 int ibosize;
+float* nbo;
+int nbosize;
 
 //-------------------------------
 //----------CUDA & Camera STUFF-----------
 //-------------------------------
 
 int width=800; int height=800;
-glm::vec3 CameraPosition = glm::vec3 (0, 2, 5.0);
 
-glm::vec3 mTranslate = glm::vec3(0.0, 0.0, 0.0);
-glm::vec3 mRotate = glm::vec3(0.0, 0.0, 0.0);
-glm::vec3 mScale = glm::vec3(1.0, 1.0, 1.0);
-glm::mat4 modelMatrix = utilityCore::buildTransformationMatrix(mTranslate, mRotate, mScale);
+/*
+glm::vec3 CameraPosition = glm::vec3 (0, 7.5, 15.0);
 
 glm::vec3 LookAtCenter = glm::vec3(0.0, 0.5, 0.0);
 glm::mat4 ViewMatrix = glm::lookAt(CameraPosition, LookAtCenter, glm::vec3(0.0, 1.0, 0.0));
@@ -71,7 +71,34 @@ glm::mat4 ViewMatrix = glm::lookAt(CameraPosition, LookAtCenter, glm::vec3(0.0, 
 glm::vec4 ViewPort = glm::vec4(0.0, 0.0, width, height);
 
 glm::mat4 Projection = glm::perspective(30.0f, static_cast<float>(width) / static_cast<float>(height), 0.1f, 50.0f);
+*/
+glm::vec3 mTranslate = glm::vec3(0.0, 0.0, 0.0);
+glm::vec3 mRotate = glm::vec3(0.0, 0.0, 0.0);
+glm::vec3 mScale = glm::vec3(1.0, 1.0, 1.0);
+glm::mat4 modelMatrix = utilityCore::buildTransformationMatrix(mTranslate, mRotate, mScale);
 
+glm::vec3 CameraPosition;
+glm::mat4 ViewMatrix;
+glm::mat4 Projection;
+glm::vec4 ViewPort;
+
+glm::vec3 LightPosition = glm::vec3(0.0, 10.0, 10.0);
+glm::vec3 LightColor	= glm::vec3(1.0, 1.0, 1.0);
+glm::vec3 AmbientColor	= glm::vec3(0.2, 0.2, 0.2);
+float specularCoefficient = 20.0f;
+
+
+glm::vec3  Camera::dfltEye(0.0, 7.5, 15.0);
+glm::vec3  Camera::dfltUp(0.0, 1.0, 0.0);
+glm::vec3  Camera::dfltLook(0.0, 0.0, 0.0);
+float Camera::dfltVfov = 30.0;
+float Camera::dfltAspect = width / height;
+float Camera::dfltNear = 0.1;
+float Camera::dfltFar = 100.0;
+float Camera::dfltSpeed = 0.1;
+float Camera::dfltTurnRate = 1.0*(M_PI/180.0);
+glm::vec4 Camera::Viewport = glm::vec4(0,0,width, height);
+Camera theCamera = Camera();
 
 //-------------------------------
 //-------------MAIN--------------
@@ -82,6 +109,13 @@ int main(int argc, char** argv);
 //-------------------------------
 //---------RUNTIME STUFF---------
 //-------------------------------
+//UI Helpers
+// UI Helpers
+int lastX = 0, lastY = 0;
+int theMenu = 0;
+int theButtonState = 0;
+int theModifierState = 0;
+
 
 void runCuda();
 
@@ -93,6 +127,10 @@ void runCuda();
 	void DrawOverlay();
 	void DrawAxes();
 	void keyboard(unsigned char key, int x, int y);
+	void onMouseMotionCb(int x, int y);
+	void onMouseCb(int button, int state, int x, int y);
+	void initCamera();
+	void setMatrices();
 #endif
 
 //-------------------------------
@@ -104,8 +142,6 @@ void runCuda();
 #else
 	void init(int argc, char* argv[]);
 #endif
-
-void initCamera();
 
 void initPBO(GLuint* pbo);
 void initCuda();
