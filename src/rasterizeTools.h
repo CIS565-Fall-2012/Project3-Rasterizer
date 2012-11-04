@@ -9,6 +9,12 @@
 #include "utilities.h"
 #include "cudaMat4.h"
 
+struct vertex {
+	glm::vec3 position;
+	glm::vec3 color;
+	glm::vec3 lightdir;
+}
+
 struct triangle {
   glm::vec3 p0;
   glm::vec3 p1;
@@ -22,6 +28,7 @@ struct fragment{
   glm::vec3 color;
   glm::vec3 normal;
   glm::vec3 position;
+  glm::vec3 lightdir;
 };
 
 //Multiplies a cudaMat4 matrix and a vec4
