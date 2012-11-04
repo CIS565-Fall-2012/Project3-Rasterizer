@@ -9,10 +9,11 @@
 #include <cuda.h>
 #include <cmath>
 #include <cutil_math.h>
+#define GLM_FORCE_CUDA
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 
 void kernelCleanup();
-void cudaRasterizeCore(uchar4* pos, glm::vec2 resolution, float frame, float* vbo, int vbosize, float* cbo, int cbosize, int* ibo, int ibosize);
+void cudaRasterizeCore(uchar4* pos, glm::vec2 resolution, float frame, float* vbo, int vbosize, float* cbo, int cbosize, int* ibo, int ibosize, glm::mat4 modelMatrix, glm::mat4 ViewMatrix, glm::mat4 Projection, glm::vec4 ViewPort, glm::vec3 CameraPosition);
 
 #endif //RASTERIZEKERNEL_H

@@ -16,9 +16,9 @@ struct triangle {
   glm::vec3 c0;
   glm::vec3 c1;
   glm::vec3 c2;
-  glm::vec3 orig_p0;
-  glm::vec3 orig_p1;
-  glm::vec3 orig_p2;
+  //glm::vec3 orig_p0;
+  //glm::vec3 orig_p1;
+  //glm::vec3 orig_p2;
 };
 
 struct fragment{
@@ -26,6 +26,7 @@ struct fragment{
   glm::vec3 normal;
   glm::vec3 position;
   glm::vec3 orig_position;
+  int Lock;
 };
 
 //Multiplies a cudaMat4 matrix and a vec4

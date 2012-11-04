@@ -26,6 +26,7 @@
 #include "rasterizeKernels.h"
 #include "utilities.h"
 #include "ObjCore/objloader.h"
+#include "glm/gtc/matrix_transform.hpp"
 
 using namespace std;
 
@@ -53,10 +54,24 @@ int* ibo;
 int ibosize;
 
 //-------------------------------
-//----------CUDA STUFF-----------
+//----------CUDA & Camera STUFF-----------
 //-------------------------------
 
 int width=800; int height=800;
+glm::vec3 CameraPosition = glm::vec3 (0, 2, 5.0);
+
+glm::vec3 mTranslate = glm::vec3(0.0, 0.0, 0.0);
+glm::vec3 mRotate = glm::vec3(0.0, 0.0, 0.0);
+glm::vec3 mScale = glm::vec3(1.0, 1.0, 1.0);
+glm::mat4 modelMatrix = utilityCore::buildTransformationMatrix(mTranslate, mRotate, mScale);
+
+glm::vec3 LookAtCenter = glm::vec3(0.0, 0.5, 0.0);
+glm::mat4 ViewMatrix = glm::lookAt(CameraPosition, LookAtCenter, glm::vec3(0.0, 1.0, 0.0));
+
+glm::vec4 ViewPort = glm::vec4(0.0, 0.0, width, height);
+
+glm::mat4 Projection = glm::perspective(30.0f, static_cast<float>(width) / static_cast<float>(height), 0.1f, 50.0f);
+
 
 //-------------------------------
 //-------------MAIN--------------
@@ -74,6 +89,9 @@ void runCuda();
 	void display();
 #else
 	void display();
+	void DrawGrid();
+	void DrawOverlay();
+	void DrawAxes();
 	void keyboard(unsigned char key, int x, int y);
 #endif
 
@@ -86,6 +104,8 @@ void runCuda();
 #else
 	void init(int argc, char* argv[]);
 #endif
+
+void initCamera();
 
 void initPBO(GLuint* pbo);
 void initCuda();

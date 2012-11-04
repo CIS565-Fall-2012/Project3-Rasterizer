@@ -1,4 +1,4 @@
-// CIS565 CUDA Rasterizer: A simple rasterization pipeline for Patrick Cozzi's CIS565: GPU Computing at the University of Pennsylvania
+ï»¿// CIS565 CUDA Rasterizer: A simple rasterization pipeline for Patrick Cozzi's CIS565: GPU Computing at the University of Pennsylvania
 // Written by Yining Karl Li, Copyright (c) 2012 University of Pennsylvania
 
 #include <stdio.h>
@@ -121,7 +121,7 @@ __global__ void sendImageToPBO(uchar4* PBOpos, glm::vec2 resolution, glm::vec3* 
 	  if(color.z>255){
 		color.z = 255;
 	  }
-	  
+
 	  // Each thread writes one pixel location in the texture (textel)
 	  PBOpos[index].w = 0;
 	  PBOpos[index].x = color.x;     
@@ -131,101 +131,161 @@ __global__ void sendImageToPBO(uchar4* PBOpos, glm::vec2 resolution, glm::vec3* 
 }
 
 //TODO: Implement a vertex shader
-__global__ void vertexShadeKernel(float* vbo, int vbosize, cudaMat4 cudaProjection){
-  int index = (blockIdx.x * blockDim.x) + threadIdx.x;
-  if(index<vbosize/3){
-		//printf("\nVertex %d = %f\t%f\t%f", index / 3, vbo[index * 3], vbo[index * 3 + 1], vbo[index * 3 + 2]);
-		glm::vec3 V(vbo[index * 3], vbo[index * 3 + 1], vbo[index * 3 + 2]);
-		V = multiplyMVPoint(cudaProjection, glm::vec4(V, 1));
+__global__ void vertexShadeKernel(float* vbo, int vbosize, glm::mat4 modelMatrix, glm::mat4 ViewMatrix,  glm::mat4 Projection, glm::vec4 ViewPort){
+	int index = (blockIdx.x * blockDim.x) + threadIdx.x;
+	if(index<vbosize/3){
+		//printf("\n\n------Vertex Shader-------");
+		//printf("\nVertex %d = %f\t%f\t%f", index, vbo[index * 3], vbo[index * 3 + 1], vbo[index * 3 + 2]);
+		glm::vec3 V = glm::vec3(vbo[index * 3], vbo[index * 3 + 1], vbo[index * 3 + 2]);
+		V = glm::project(V, ViewMatrix * modelMatrix, Projection, ViewPort);
 		vbo[index * 3]		=	V.x;
 		vbo[index * 3 + 1]	=	V.y;
 		vbo[index * 3 + 2]	=	V.z;
-  }
+		//printf("\nProjection %d = %f\t%f\t%f", index, vbo[index * 3], vbo[index * 3 + 1], vbo[index * 3 + 2]);
+	}
 }
 
 //TODO: Implement primative assembly
-__global__ void primitiveAssemblyKernel(float* vbo, int vbosize, float* cbo, int cbosize, int* ibo, int ibosize, triangle* primitives, float* device_vbo_orig){
+__global__ void primitiveAssemblyKernel(float* vbo, int vbosize, float* cbo, int cbosize, int* ibo, int ibosize, triangle* primitives){
   int index = (blockIdx.x * blockDim.x) + threadIdx.x;
   int primitivesCount = ibosize/3;
   if(index<primitivesCount){
 	  int iboIndex = 3 * index;
 	  //Transformed Vertices
+	  //printf("\n\n------Primitive Assembly-------");
 	  primitives[index].p0 = glm::vec3(vbo[3 * iboIndex], vbo[3 * iboIndex + 1], vbo[3 * iboIndex + 2]);
 	  primitives[index].p1 = glm::vec3(vbo[3 * (iboIndex + 1)], vbo[3 * (iboIndex + 1) + 1], vbo[3 * (iboIndex + 1) + 2]);
 	  primitives[index].p2 = glm::vec3(vbo[3 * (iboIndex + 2)], vbo[3 * (iboIndex + 2) + 1], vbo[3 * (iboIndex + 2) + 2]);
 	  //Original Vertices
-	  primitives[index].orig_p0 = glm::vec3(device_vbo_orig[3 * iboIndex], device_vbo_orig[3 * iboIndex + 1], device_vbo_orig[3 * iboIndex + 2]);
-	  primitives[index].orig_p1 = glm::vec3(device_vbo_orig[3 * (iboIndex + 1)], device_vbo_orig[3 * (iboIndex + 1) + 1], device_vbo_orig[3 * (iboIndex + 1) + 2]);
-	  primitives[index].orig_p2 = glm::vec3(device_vbo_orig[3 * (iboIndex + 2)], device_vbo_orig[3 * (iboIndex + 2) + 1], device_vbo_orig[3 * (iboIndex + 2) + 2]);
+	  //primitives[index].orig_p0 = glm::vec3(device_vbo_orig[3 * iboIndex], device_vbo_orig[3 * iboIndex + 1], device_vbo_orig[3 * iboIndex + 2]);
+	  //primitives[index].orig_p1 = glm::vec3(device_vbo_orig[3 * (iboIndex + 1)], device_vbo_orig[3 * (iboIndex + 1) + 1], device_vbo_orig[3 * (iboIndex + 1) + 2]);
+	  //primitives[index].orig_p2 = glm::vec3(device_vbo_orig[3 * (iboIndex + 2)], device_vbo_orig[3 * (iboIndex + 2) + 1], device_vbo_orig[3 * (iboIndex + 2) + 2]);
 	  //Vertex Color
-	  primitives[index].c0 = glm::vec3(cbo[3 * iboIndex], cbo[3 * iboIndex + 1], cbo[3 * iboIndex + 2]);
-	  primitives[index].c1 = glm::vec3(cbo[3 * (iboIndex + 1)], cbo[3 * (iboIndex + 1) + 1], cbo[3 * (iboIndex + 1) + 2]);
-	  primitives[index].c2 = glm::vec3(cbo[3 * (iboIndex + 2)], cbo[3 * (iboIndex + 2) + 1], cbo[3 * (iboIndex + 2) + 2]);
-	  //if(index <= 100)
+	  primitives[index].c0 = glm::vec3(cbo[0], cbo[1], cbo[2]);
+	  primitives[index].c1 = glm::vec3(cbo[3], cbo[4], cbo[5]);
+	  primitives[index].c2 = glm::vec3(cbo[6], cbo[7], cbo[8]);
+	  
 	  //Print Vertices
-	  printf("\nPrimitive %d.A = %f\t%f\t%f", index, primitives[index].p0.x, primitives[index].p0.y, primitives[index].p0.z);
-	  printf("\nPrimitive %d.B = %f\t%f\t%f", index, primitives[index].p1.x, primitives[index].p1.y, primitives[index].p1.z);
-	  printf("\nPrimitive %d.C = %f\t%f\t%f", index, primitives[index].p2.x, primitives[index].p2.y, primitives[index].p2.z);
+	  //printf("\nPrimitive %d.A = %f\t%f\t%f", index, primitives[index].p0.x, primitives[index].p0.y, primitives[index].p0.z);
+	  //printf("\nPrimitive %d.B = %f\t%f\t%f", index, primitives[index].p1.x, primitives[index].p1.y, primitives[index].p1.z);
+	  //printf("\nPrimitive %d.C = %f\t%f\t%f", index, primitives[index].p2.x, primitives[index].p2.y, primitives[index].p2.z);
 
-	  printf("\nOrig Primitive %d.A = %f\t%f\t%f", index, primitives[index].orig_p0.x, primitives[index].orig_p0.y, primitives[index].orig_p0.z);
-	  printf("\nOrig Primitive %d.B = %f\t%f\t%f", index, primitives[index].orig_p1.x, primitives[index].orig_p1.y, primitives[index].orig_p1.z);
-	  printf("\nOrig Primitive %d.C = %f\t%f\t%f", index, primitives[index].orig_p2.x, primitives[index].orig_p2.y, primitives[index].orig_p2.z);
+	  //printf("\nOrig Primitive %d.A = %f\t%f\t%f", index, primitives[index].orig_p0.x, primitives[index].orig_p0.y, primitives[index].orig_p0.z);
+	  //printf("\nOrig Primitive %d.B = %f\t%f\t%f", index, primitives[index].orig_p1.x, primitives[index].orig_p1.y, primitives[index].orig_p1.z);
+	  //printf("\nOrig Primitive %d.C = %f\t%f\t%f", index, primitives[index].orig_p2.x, primitives[index].orig_p2.y, primitives[index].orig_p2.z);
+
+	  //printf("\nPrimitive Color %d.A = %f\t%f\t%f", index, primitives[index].c0.x, primitives[index].c0.y, primitives[index].c0.z);
+	  //printf("\nPrimitive Color %d.B = %f\t%f\t%f", index, primitives[index].c1.x, primitives[index].c1.y, primitives[index].c1.z);
+	  //printf("\nPrimitive Color %d.C = %f\t%f\t%f", index, primitives[index].c2.x, primitives[index].c2.y, primitives[index].c2.z);
   }
 }
 
 //TODO: Implement a rasterization method, such as scanline.
-__global__ void rasterizationKernel(triangle* primitives, int primitivesCount, fragment* depthbuffer, glm::vec2 resolution){
+__global__ void rasterizationKernel(triangle* primitives, int primitivesCount, fragment* depthbuffer, glm::vec2 resolution, glm::mat4 modelMatrix, glm::mat4 ViewMatrix,  glm::mat4 Projection, glm::vec4 ViewPort){
 	int index = (blockIdx.x * blockDim.x) + threadIdx.x;
 	if(index<primitivesCount){
-		
+		//printf("\n\n------Rasterization-------");
 		glm::vec3 minPoint(0.0, 0.0, 0.0);
 		glm::vec3 maxPoint(0.0, 0.0, 0.0);
 		getAABBForTriangle(primitives[index], minPoint, maxPoint);
+		
+		//Calculate the Original Points
+		glm::vec3 OPoint0 = glm::unProject(primitives[index].p0, ViewMatrix * modelMatrix, Projection, ViewPort);		//Point in world space
+		glm::vec3 OPoint1 = glm::unProject(primitives[index].p1, ViewMatrix * modelMatrix, Projection, ViewPort);		//Point in world space
+		glm::vec3 OPoint2 = glm::unProject(primitives[index].p2, ViewMatrix * modelMatrix, Projection, ViewPort);		//Point in world space
+
+		//printf("\nMaxPoint %d = %f\t%f\t%f", index, maxPoint.x, maxPoint.y, maxPoint.z);
+		//printf("\nMinPoint %d = %f\t%f\t%f", index, minPoint.x, minPoint.y, minPoint.z);
 
 		glm::vec3 CPoints[4] = {primitives[index].p0, primitives[index].p1, primitives[index].p2, primitives[index].p0};
-		float incY = 1.0f / resolution.y;
-		for(float j = minPoint.y - 1; j < maxPoint.y + 1; j+=incY)
+		for(int j = minPoint.y; j <= maxPoint.y; j++)
 		{
-			glm::vec3 FirstPoint = glm::vec3(-1, j, 0);	//Setting it inverted because we need space of scanline area covered
-			glm::vec3 LastPoint = glm::vec3(2, j, 0);
-
+			glm::vec3 FirstPoint = glm::vec3(10000, j, 0);	//Setting it inverted because we need space of scanline area covered
+			glm::vec3 LastPoint = glm::vec3(-10000, j, 0);
+		
+			float t = -1.0f;
 			for(int k = 0; k < 3; k++)
 			{
-				glm::vec3 StartPoint = CPoints[k];
-				glm::vec3 EndPoint = CPoints[k+1];
-				glm::vec3 LineUnit = glm::normalize(EndPoint - StartPoint);
+				glm::vec3 StartPoint;
+				glm::vec3 EndPoint;
 				
-				if((LineUnit.x != 0 && LineUnit.z != 0) || (LineUnit.y == j))			//Check for Parallel Lines
-				{
-					float LineLength = glm::length(EndPoint - StartPoint);
-					float t = (j - StartPoint.y) / LineUnit.y;
-					glm::vec3 IntersectionPoint;
+				StartPoint = CPoints[k];
+				EndPoint = CPoints[k+1];
+				
+				glm::vec3 LineUnit(0.0);
+				float LineLength = glm::length(EndPoint - StartPoint);
+				if(LineLength > 0.001)
+					LineUnit = glm::normalize(EndPoint - StartPoint);
+				t = -1.0f;
+				
+				t = (j - StartPoint.y) / LineUnit.y;
+				glm::vec3 IntersectionPoint;
 					
-					if(t >=0 && t <= LineLength)
-						IntersectionPoint = StartPoint + LineUnit * t;
+				if(t >=0 && t <= LineLength)
+				{
+					IntersectionPoint = StartPoint + LineUnit * t;
 					if(IntersectionPoint.x < FirstPoint.x)
 						FirstPoint = IntersectionPoint;
 					if(IntersectionPoint.x > LastPoint.x)
-						LastPoint = IntersectionPoint;
+							LastPoint = IntersectionPoint;
 				}
 			}
-			glm::vec3 ScanlineUnit = glm::normalize(LastPoint - FirstPoint);
-			float ScanlineLenght = glm::length(LastPoint - FirstPoint);
-			float incX = 1.0f / resolution.x;
-			int n = ScanlineLength / incX;
-			float t = 0;
-			for(float i = FirstPoint.x; i <= LastPoint.x; i+=incX, t+=n)
+			
+			if(t > 0 && FirstPoint.x < resolution.x && LastPoint.x > 0)
 			{
-				int x = i * resolution.x;		//pixel values
-				int y = j * resolution.y;
+				if(FirstPoint.x > LastPoint.x)		//Check if first point is greater than the last point
+				{
+					glm::vec3 temp = LastPoint;
+					LastPoint = FirstPoint;
+					FirstPoint = temp;
+				}
+				
+				//printf("\nFirst Point %d = %f\t%f\t%f", index, FirstPoint.x, FirstPoint.y, FirstPoint.z);
+				//printf("\nLast Point %d = %f\t%f\t%f", index, LastPoint.x, LastPoint.y, LastPoint.z);
+			
+				float ScanlineLength = glm::length(LastPoint - FirstPoint);
+				glm::vec3 ScanlineUnit(0.0);
+				if(ScanlineLength > 0.001)
+					ScanlineUnit = glm::normalize(LastPoint - FirstPoint);
+			
+				float t = 0;
+				int ypix = resolution.y - j;
 
-				index = y * resolution.x + x;
-				glm::vec3 Point = FirstPoint + t * ScanlineUnit;
+				for(int i = 0; i < ScanlineLength; i++)
+				{
+					glm::vec3 SPoint = FirstPoint + (float)i * ScanlineUnit;
+					int xpix = resolution.x - SPoint.x;//Point in screen space 0,0,800,800
+					glm::vec3 WPoint = glm::unProject(SPoint, ViewMatrix * modelMatrix, Projection, ViewPort);		//Point in world space
+					glm::vec3 BPoint = calculateBarycentricCoordinate(primitives[index], glm::vec2(SPoint.x, SPoint.y));
+					
+					//printf("\nWorld Point %d = %f\t%f\t%f", index, WPoint.x, WPoint.y, WPoint.z);
+					//printf("\nBarycentric Point %d = %f\t%f\t%f", index, BPoint.x, BPoint.y, BPoint.z);
+			
+					
 
-				//Atomic Compare and swap
+					int bufIndex = ypix * resolution.x + xpix;
+					
+					fragment fragXY;
+					fragXY.color = BPoint.x * primitives[index].c0 + BPoint.y * primitives[index].c1 + BPoint.z * primitives[index].c2;
+					fragXY.normal = glm::normalize(glm::cross(glm::normalize(OPoint2 - OPoint1), glm::normalize(OPoint1 - OPoint1)));
+					fragXY.orig_position = glm::vec3(modelMatrix * glm::vec4(WPoint, 1.0));
+					fragXY.position = SPoint;
+					fragXY.Lock = 0;
+					//Atomic Compare and swap
+
+					bool dontLeaveLoop = true;
+					while(dontLeaveLoop)
+					{
+						if(atomicExch(&(depthbuffer[bufIndex].Lock), 1) == 0)
+						{
+							depthbuffer[bufIndex] = fragXY;
+							dontLeaveLoop = false;
+							atomicExch(&(depthbuffer[bufIndex].Lock), 0);
+						}
+					}
+				}
 			}
 		}
-		
 	}
 }
 
@@ -235,29 +295,34 @@ __global__ void fragmentShadeKernel(fragment* depthbuffer, glm::vec2 resolution,
 	int y = (blockIdx.y * blockDim.y) + threadIdx.y;
 	int index = x + (y * resolution.x);
 	if(x<=resolution.x && y<=resolution.y){
-		if(depthbuffer[index].position.z > 0)
+		if(depthbuffer[index].position.z > -9000)
 		{
-			glm::vec3 LightPosition = glm::vec3(3.0, 3.0, -3.0);
+			glm::vec3 LightPosition = glm::vec3(0.0, 5.0, 0.0);
 			glm::vec3 LightColor	= glm::vec3(1.0, 1.0, 1.0);
-			glm::vec3 AmbientColor	= glm::vec3(0.1, 0.1, 0.1);
-			glm::vec3 Incident = Camera - depthbuffer[index].orig_position;
-			glm::vec3 Reflected = Incident - 2.0f * glm::normalize(depthbuffer[index].normal) * (glm::dot(glm::normalize(Incident), glm::normalize(depthbuffer[index].normal)));//Ri – 2 N (Ri • N)
-			
+			glm::vec3 AmbientColor	= glm::vec3(0.0, 0.0, 0.0);
+
+			glm::vec3 Incident = glm::normalize(Camera - depthbuffer[index].orig_position);
+			glm::vec3 normal = glm::normalize(depthbuffer[index].normal);
+			glm::vec3 Reflected = glm::normalize(Incident - 2.0f * normal * glm::dot(Incident, normal));//Ri Â–- 2 * N *(Ri .Â• N)
+
 			//calculate diffuse term and clamp to the range [0, 1]
-			float diffuseTerm = clamp(glm::dot(glm::normalize(depthbuffer[index].normal), glm::normalize(LightPosition - depthbuffer[index].orig_position)), 0.0, 1.0);
-			float specularTerm = clamp(glm::dot(glm::normalize(Reflected), glm::normalize(Incident)), 0.0, 1.0);
+			float diffuseTerm = clamp(glm::dot(normal, glm::normalize(LightPosition - depthbuffer[index].orig_position)), 0.0, 1.0);
+			float specularTerm = clamp(glm::dot(Reflected, Incident), 0.0, 1.0);
+			
 			if(diffuseTerm == 0)
 				specularTerm = 0;
+			
 			glm::vec3 out_Color = depthbuffer[index].color * LightColor;
 			out_Color = out_Color * diffuseTerm 
 						+ out_Color * AmbientColor 
 						+ out_Color * pow(specularTerm, 30.0f);
-			glm::clamp(out_Color, glm::vec3(0.0f), glm::vec3(1.0f));
+			
+			glm::clamp(out_Color, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f));
 			depthbuffer[index].color = out_Color;
 		}
 		else
 		{
-			depthbuffer[index].color = glm::vec3(1,1,0);
+			depthbuffer[index].color = glm::vec3(0,0,0);
 		}
 	}
 }
@@ -275,7 +340,8 @@ __global__ void render(glm::vec2 resolution, fragment* depthbuffer, glm::vec3* f
 }
 
 // Wrapper for the __global__ call that sets up the kernel calls and does a ton of memory management
-void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float* vbo, int vbosize, float* cbo, int cbosize, int* ibo, int ibosize){
+void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float* vbo, int vbosize, float* cbo, int cbosize, int* ibo, int ibosize, glm::mat4 modelMatrix, glm::mat4 ViewMatrix, glm::mat4 Projection, glm::vec4 ViewPort, glm::vec3 CameraPosition)
+{
 
 	// set up crucial magic
 	int tileSize = 8;
@@ -298,21 +364,17 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float*
 	frag.normal = glm::vec3(0,0,0);
 	frag.position = glm::vec3(0,0,-10000);
 	frag.orig_position = glm::vec3(0, 0, -10000);
+	frag.Lock = 0;
 	clearDepthBuffer<<<fullBlocksPerGrid, threadsPerBlock>>>(resolution, depthbuffer,frag);
   
 	//------------------------------
 	//Set Up Camera Projection Matrix
 	//------------------------------
-	glm::vec3 CameraPosition = glm::vec3(0.0f, 0.5f, 5.0f);
-	int width = resolution.x;
-	int height = resolution.y;
 	
-	glm::mat4 projection = glm::perspective(30.0f, static_cast<float>(width) / static_cast<float>(height), 0.1f, 50.0f);
-	glm::mat4 camera = glm::lookAt(CameraPosition, glm::vec3(0.0, 0.5, 0), glm::vec3(0, 1, 0));
-	projection = projection * camera;
-	cudaMat4 cudaProjection = utilityCore::glmMat4ToCudaMat4(projection);
-	glm::mat4 invProjection = glm::inverse(projection);
-	cudaMat4 cudaInvProjection = utilityCore::glmMat4ToCudaMat4(invProjection);
+	//cudaMat4 cudaModelMatrix	= utilityCore::glmMat4ToCudaMat4(modelMatrix);
+	//cudaMat4 cudaViewMatrix			= utilityCore::glmMat4ToCudaMat4(ViewMatrix);
+	//cudaMat4 cudaProjection			= utilityCore::glmMat4ToCudaMat4(Projection);
+	//glm::vec4 ViewPort remains same
 
 	//------------------------------
 	//memory stuff
@@ -328,10 +390,6 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float*
 	cudaMalloc((void**)&device_vbo, vbosize*sizeof(float));
 	cudaMemcpy( device_vbo, vbo, vbosize*sizeof(float), cudaMemcpyHostToDevice);
 
-	device_vbo_orig = NULL;
-	cudaMalloc((void**)&device_vbo_orig, vbosize*sizeof(float));
-	cudaMemcpy( device_vbo_orig, vbo, vbosize*sizeof(float), cudaMemcpyHostToDevice);
-
 	device_cbo = NULL;
 	cudaMalloc((void**)&device_cbo, cbosize*sizeof(float));
 	cudaMemcpy( device_cbo, cbo, cbosize*sizeof(float), cudaMemcpyHostToDevice);
@@ -342,21 +400,21 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float*
 	//------------------------------
 	//vertex shader
 	//------------------------------
-	vertexShadeKernel<<<primitiveBlocks, tileSize>>>(device_vbo, vbosize, cudaProjection);
+	vertexShadeKernel<<<primitiveBlocks, tileSize>>>(device_vbo, vbosize, modelMatrix, ViewMatrix, Projection, ViewPort);
 
 	cudaDeviceSynchronize();
 	//------------------------------
 	//primitive assembly
 	//------------------------------
 	primitiveBlocks = ceil(((float)ibosize/3)/((float)tileSize));
-	primitiveAssemblyKernel<<<primitiveBlocks, tileSize>>>(device_vbo, vbosize, device_cbo, cbosize, device_ibo, ibosize, primitives, device_vbo_orig);
-
+	primitiveAssemblyKernel<<<primitiveBlocks, tileSize>>>(device_vbo, vbosize, device_cbo, cbosize, device_ibo, ibosize, primitives);
+	
 	cudaDeviceSynchronize();
 	//------------------------------
 	//rasterization
 	//------------------------------
-	rasterizationKernel<<<primitiveBlocks, tileSize>>>(primitives, ibosize/3, depthbuffer, resolution);
-
+	rasterizationKernel<<<primitiveBlocks, tileSize>>>(primitives, ibosize/3, depthbuffer, resolution, modelMatrix, ViewMatrix, Projection, ViewPort);
+	
 	cudaDeviceSynchronize();
 	//------------------------------
 	//fragment shader
@@ -380,7 +438,6 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float*
 void kernelCleanup(){
   cudaFree( primitives );
   cudaFree( device_vbo );
-  cudaFree( device_vbo_orig);
   cudaFree( device_cbo );
   cudaFree( device_ibo );
   cudaFree( framebuffer );
