@@ -5,6 +5,8 @@
 #define OBJ
 
 #include "../glm/glm.hpp"
+#include "../cudaMat4.h"
+#include <cuda_runtime.h>
 #include <string>
 #include <vector>
 
@@ -32,6 +34,12 @@ private:
 	glm::vec3 defaultColor;
 	float xmax; float xmin; float ymax; float ymin; float zmax; float zmin; 
 	bool maxminSet;
+
+	//ADDED
+	//cudaMat4 modelMatrix;
+	glm::mat4 modelMatrix;
+	//ADDED
+
 public:
 	obj();
 	~obj();  
@@ -72,6 +80,14 @@ public:
 	vector<glm::vec4>* getNormals();
 	vector<glm::vec4>* getTextureCoords();
     vector<float*>* getFaceBoxes();
+	//ADDED
+	/*
+	cudaMat4 getModelMatrix();
+	void setModelMatrix(cudaMat4 modelMatrix);
+	*/
+	glm::mat4 getModelMatrix();
+	void setModelMatrix(glm::mat4 modelMatrix);
+	//ADDED
 };
 
 #endif

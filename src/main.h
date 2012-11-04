@@ -26,6 +26,12 @@
 #include "rasterizeKernels.h"
 #include "utilities.h"
 #include "ObjCore/objloader.h"
+#include "Light.h"
+
+//ADDED
+#include "glm/gtc/matrix_transform.hpp"
+#include "Camera.h"
+//ADDED
 
 using namespace std;
 
@@ -44,13 +50,38 @@ GLuint displayImage;
 uchar4 *dptr;
 
 obj* mesh;
-
+//ADDED
+unsigned int numberOfMeshes = 0;
+glm::vec3 currentForward;
+glm::vec3 currentUp;
+glm::vec3 currentEye;
+float  fovy, aspectRatio;
+float currentNear;
+float currentFar;
+float currentLeft;
+float currentRight;
+float currentBottom;
+float currentTop;
+Light *lights;
+unsigned int numberOfLights = 2;
+float *nbo;
+int nbosize;
+//ADDED
 float* vbo;
 int vbosize;
 float* cbo;
 int cbosize;
 int* ibo;
 int ibosize;
+
+//Mouse Interaction
+Camera theCamera;
+int theButtonState = 0;
+int theModifierState = 0;
+int mouseStartX, mouseEndX;
+int mouseStartY, mouseEndY;
+int lastX = 0, lastY = 0;
+//Mouse Interaction
 
 //-------------------------------
 //----------CUDA STUFF-----------
@@ -75,6 +106,9 @@ void runCuda();
 #else
 	void display();
 	void keyboard(unsigned char key, int x, int y);
+	void onMouseCb(int button, int state, int x, int y);
+	void onMouseMotionCb(int x, int y);
+	void initCamera();
 #endif
 
 //-------------------------------

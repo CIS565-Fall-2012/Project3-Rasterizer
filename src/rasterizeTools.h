@@ -9,6 +9,22 @@
 #include "utilities.h"
 #include "cudaMat4.h"
 
+//ADDED
+struct Point
+{
+	glm::vec3 p0;
+	glm::vec3 c0;
+};
+
+struct Line
+{
+	glm::vec3 p0;
+	glm::vec3 p1;
+	glm::vec3 c0;
+	glm::vec3 c1;
+};
+//ADDED
+
 struct triangle {
   glm::vec3 p0;
   glm::vec3 p1;
@@ -16,20 +32,44 @@ struct triangle {
   glm::vec3 c0;
   glm::vec3 c1;
   glm::vec3 c2;
+  //ADDED
+  //glm::vec3 faceNormal;	// World Normal
+  glm::vec3 n0;
+  glm::vec3 n1;
+  glm::vec3 n2;
+  //ADDED
 };
 
 struct fragment{
   glm::vec3 color;
   glm::vec3 normal;
-  glm::vec3 position;
+  glm::vec3 worldPosition;
+  int screenSpaceX, screenSpaceY;
+  float worldDepth;
+  unsigned int lockVariable;
 };
 
 //Multiplies a cudaMat4 matrix and a vec4
-__host__ __device__ glm::vec3 multiplyMV(cudaMat4 m, glm::vec4 v){
+__host__ __device__ glm::vec3 multiplyMV(cudaMat4 m, glm::vec4 v)
+{
   glm::vec3 r(1,1,1);
   r.x = (m.x.x*v.x)+(m.x.y*v.y)+(m.x.z*v.z)+(m.x.w*v.w);
   r.y = (m.y.x*v.x)+(m.y.y*v.y)+(m.y.z*v.z)+(m.y.w*v.w);
   r.z = (m.z.x*v.x)+(m.z.y*v.y)+(m.z.z*v.z)+(m.z.w*v.w);
+  return r;
+}
+
+//Special Multiply for taking care of projection
+__host__ __device__ glm::vec3 multiplyMVWithHomogenization(cudaMat4 m, glm::vec4 v)
+{
+  glm::vec3 r(1,1,1);
+  r.x = (m.x.x*v.x)+(m.x.y*v.y)+(m.x.z*v.z)+(m.x.w*v.w);
+  r.y = (m.y.x*v.x)+(m.y.y*v.y)+(m.y.z*v.z)+(m.y.w*v.w);
+  r.z = (m.z.x*v.x)+(m.z.y*v.y)+(m.z.z*v.z)+(m.z.w*v.w);
+  float w = (m.w.x*v.x)+(m.w.y*v.y)+(m.w.z*v.z)+(m.w.w*v.w);
+  r.x /= w;
+  r.y /= w;
+  r.z /= w;
   return r;
 }
 
@@ -73,6 +113,23 @@ __host__ __device__ bool isBarycentricCoordInBounds(glm::vec3 barycentricCoord){
 //LOOK: for a given barycentric coordinate, return the corresponding z position on the triangle
 __host__ __device__ float getZAtCoordinate(glm::vec3 barycentricCoord, triangle tri){
   return -(barycentricCoord.x*tri.p0.z + barycentricCoord.y*tri.p1.z + barycentricCoord.z*tri.p2.z);
+}
+
+__host__ __device__ glm::vec3 getPositionAtBarycentricCoordinate(glm::vec3 barycentricCoord, triangle tri){
+  return (barycentricCoord.x*tri.p0 + barycentricCoord.y*tri.p1 + barycentricCoord.z*tri.p2);
+}
+
+__host__ __device__ glm::vec3 getColorAtBarycentricCoordinate(glm::vec3 barycentricCoord, triangle tri){
+	return (barycentricCoord.x*tri.c0 + barycentricCoord.y*tri.c1 + barycentricCoord.z*tri.c2);
+}
+
+__host__ __device__ float giveWorldSpaceDepth(glm::vec3 barycentricCoords, triangle originalTriangle, glm::vec3 eye)
+{
+	return glm::distance(eye, getPositionAtBarycentricCoordinate(barycentricCoords, originalTriangle));
+}
+
+__host__ __device__ glm::vec3 getNormalAtBarycentricCoordinate(glm::vec3 barycentricCoord, triangle tri){
+	return (barycentricCoord.x*tri.n0 + barycentricCoord.y*tri.n1 + barycentricCoord.z*tri.n2);
 }
 
 #endif

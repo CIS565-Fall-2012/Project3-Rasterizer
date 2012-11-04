@@ -13,6 +13,9 @@
     <ClInclude Include="..\..\src\ObjCore\objloader.h">
       <Filter>ObjCore</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Camera.h" />
+    <ClInclude Include="..\..\src\matrix.h" />
+    <ClInclude Include="..\..\src\Light.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\glslUtility.cpp" />
@@ -24,6 +27,7 @@
     <ClCompile Include="..\..\src\ObjCore\objloader.cpp">
       <Filter>ObjCore</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Camera.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="..\..\src\rasterizeKernels.cu" />
