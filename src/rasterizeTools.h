@@ -19,6 +19,7 @@ struct triangle {
   vertex v0;
   vertex v1;
   vertex v2;
+  glm::vec3 normal;
 };
 
 struct fragment{
