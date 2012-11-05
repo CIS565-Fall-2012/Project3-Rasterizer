@@ -319,6 +319,10 @@ void keyboard(unsigned char key, int x, int y)
 		case'4':
 			UseAmbientShade = !UseAmbientShade;
 			break;
+
+		case'5':
+			UseDepthShade = !UseDepthShade;
+			break;
 	}
 }
 

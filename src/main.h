@@ -67,6 +67,7 @@ bool UseFragmentShader = true;
 bool UseDiffuseShade = true;
 bool UseSpecularShade = true;
 bool UseAmbientShade = true;
+bool UseDepthShade = false;
 //////////////////////////////Specify Mesh Model Matrix Values Here///////////////////////////////////
 glm::vec3 mTranslate = glm::vec3(0.0, 0.0, 0.0);
 glm::vec3 mRotate = glm::vec3(0.0, 0.0, 0.0);

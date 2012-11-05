@@ -327,12 +327,12 @@ __global__ void rasterizationKernel(triangle* primitives, int primitivesCount, f
 										
 					//Atomic Compare and swap
 					bool dontLeaveLoop = true;
-					float FragDistanceFromEye = glm::length(fragXY.orig_position - CameraPosition);
+					fragXY.distance = glm::length(fragXY.orig_position - CameraPosition);
 									
 					while(dontLeaveLoop)
 					{
 						float BufferDistanceFromEye = glm::length(depthbuffer[bufIndex].orig_position - CameraPosition);
-						if(FragDistanceFromEye < BufferDistanceFromEye)
+						if(fragXY.distance < BufferDistanceFromEye)
 						{	
 							if(atomicExch(&(depthbuffer[bufIndex].Lock), 1) == 0)
 							{
@@ -353,13 +353,20 @@ __global__ void rasterizationKernel(triangle* primitives, int primitivesCount, f
 }
 
 //TODO: Implement a fragment shader
-__global__ void fragmentShadeKernel(fragment* depthbuffer, glm::vec2 resolution, glm::vec3 Camera, glm::vec3 LightPosition, glm::vec3 LightColor, glm::vec3 AmbientColor, float specularCoefficient, bool UseDiffuseShade, bool UseSpecularShade, bool UseAmbientShade){
+__global__ void fragmentShadeKernel(fragment* depthbuffer, glm::vec2 resolution, glm::vec3 Camera, glm::vec3 LightPosition, glm::vec3 LightColor, glm::vec3 AmbientColor, float specularCoefficient, bool UseDiffuseShade, bool UseSpecularShade, bool UseAmbientShade, bool UseDepthShade){
 	int x = (blockIdx.x * blockDim.x) + threadIdx.x;
 	int y = (blockIdx.y * blockDim.y) + threadIdx.y;
 	int index = x + (y * resolution.x);
 	if(x<=resolution.x && y<=resolution.y){
-		if(depthbuffer[index].position.z > -9000)
+		if(depthbuffer[index].distance > -9000)
 		{
+			if(UseDepthShade)
+			{
+				glm::vec3 out_Color = 300.0f * glm::vec3(1.0, 1.0, 1.0) / (depthbuffer[index].distance * depthbuffer[index].distance);
+				glm::clamp(out_Color, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f));
+				depthbuffer[index].color = out_Color;
+				return;
+			}
 			//glm::vec3 LightPosition = glm::vec3(0.0, 10.0, 10.0);
 			//glm::vec3 LightColor	= glm::vec3(1.0, 1.0, 1.0);
 			//glm::vec3 AmbientColor	= glm::vec3(0.2, 0.2, 0.2);
@@ -376,6 +383,8 @@ __global__ void fragmentShadeKernel(fragment* depthbuffer, glm::vec2 resolution,
 				specularTerm = 0;
 			
 			glm::vec3 out_Color = glm::vec3(0.0);
+			
+			
 			glm::vec3 Color = depthbuffer[index].color;
 			if(UseDiffuseShade)
 				out_Color += Color * LightColor * diffuseTerm;
@@ -431,6 +440,7 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float*
 	frag.normal = glm::vec3(0,0,0);
 	frag.position = glm::vec3(0,0,-10000);
 	frag.orig_position = glm::vec3(0, 0, -10000);
+	frag.distance = -10000;
 	frag.Lock = 0;
 	clearDepthBuffer<<<fullBlocksPerGrid, threadsPerBlock>>>(resolution, depthbuffer,frag);
   
@@ -496,7 +506,7 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float*
 	//------------------------------
 	if(UseFragmentShader)
 	{
-		fragmentShadeKernel<<<fullBlocksPerGrid, threadsPerBlock>>>(depthbuffer, resolution, CameraPosition, LightPosition, LightColor, AmbientColor, specularCoefficient, UseDiffuseShade, UseSpecularShade, UseAmbientShade);
+		fragmentShadeKernel<<<fullBlocksPerGrid, threadsPerBlock>>>(depthbuffer, resolution, CameraPosition, LightPosition, LightColor, AmbientColor, specularCoefficient, UseDiffuseShade, UseSpecularShade, UseAmbientShade, UseDepthShade);
 
 		cudaDeviceSynchronize();
 	}
