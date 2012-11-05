@@ -139,12 +139,14 @@ __global__ void vertexShadeKernel(float* vbo, int vbosize, const cudaMat4* MVP_m
 {
 	int index = (blockIdx.x * blockDim.x) + threadIdx.x;
 	if(index<vbosize/3){
-		glm::vec3 newPoint = 
-			multiplyMV(*MVP_matrix, glm::vec4(vbo[index], vbo[index+1], vbo[index+2], 1.f));
+		int vboIdx = 3*index;
 
-		vbo[index] = newPoint.x;
-		vbo[index+1] = newPoint.y;
-		vbo[index+2] = newPoint.z;
+		glm::vec3 newPoint = 
+			multiplyMV(*MVP_matrix, glm::vec4(vbo[vboIdx], vbo[vboIdx+1], vbo[vboIdx+2], 1.f));
+
+		vbo[vboIdx] = newPoint.x;
+		vbo[vboIdx+1] = newPoint.y;
+		vbo[vboIdx+2] = newPoint.z;
 	}
 }
 
@@ -163,9 +165,9 @@ __global__ void primitiveAssemblyKernel(float* vbo, int vbosize, float* cbo, int
 	  glm::set(primitives[index].p1, vbo[comp_idx1], vbo[comp_idx1+1], vbo[comp_idx1+2]);
 	  glm::set(primitives[index].p2, vbo[comp_idx2], vbo[comp_idx2+1], vbo[comp_idx2+2]);
 
-	  glm::set(primitives[index].c0, cbo[comp_idx0], cbo[comp_idx0+1], cbo[comp_idx0+2]);
-	  glm::set(primitives[index].c1, cbo[comp_idx1], cbo[comp_idx1+1], cbo[comp_idx1+2]);
-	  glm::set(primitives[index].c2, cbo[comp_idx2], cbo[comp_idx2+1], cbo[comp_idx2+2]);
+	  glm::set(primitives[index].c0, cbo[0], cbo[1], cbo[2]);
+	  glm::set(primitives[index].c1, cbo[3], cbo[4], cbo[5]);
+	  glm::set(primitives[index].c2, cbo[6], cbo[7], cbo[8]);
   }
 }
 
@@ -173,7 +175,7 @@ __host__ __device__ glm::vec2 convertPixel2NormalCoord(int pixelX, int pixelY, g
 {
 	glm::vec2 normalPoint;
 	normalPoint.x = (2*pixelX + 1 - resolution.x)/resolution.x;
-	normalPoint.y = -(2*pixelX + 1 - resolution.x)/resolution.x;
+	normalPoint.y = -(2*pixelY + 1 - resolution.y)/resolution.y;
 
 	return normalPoint;
 }
@@ -190,10 +192,20 @@ __global__ void rasterizationKernel(const triangle* primitives, int primitivesCo
 		glm::vec3 minPoint, maxPoint;
 		getAABBForTriangle(targetTriangle, minPoint, maxPoint);
 
-		int minPixel_X = min((int)floor((minPoint.x + 1)*resolution.x/2), (int)resolution.x - 1);
-		int maxPixel_X = min((int)floor((maxPoint.x + 1)*resolution.x/2), (int)resolution.x - 1);
-		int minPixel_Y = min((int)floor((-minPoint.y + 1)*resolution.y/2), (int)resolution.y - 1);
-		int maxPixel_Y = min((int)floor((-maxPoint.y + 1)*resolution.y/2), (int)resolution.y - 1);
+		int minPixel_X = (int)floor((minPoint.x + 1)*resolution.x/2);
+		int maxPixel_X = (int)floor((maxPoint.x + 1)*resolution.x/2);
+		int maxPixel_Y = (int)floor((-minPoint.y + 1)*resolution.y/2); // min/max are intentionally flipped
+		int minPixel_Y = (int)floor((-maxPoint.y + 1)*resolution.y/2);
+
+		if (minPixel_X >= resolution.x) return;
+		if (minPixel_Y >= resolution.y) return;
+		if (maxPixel_X < 0) return;
+		if (maxPixel_Y < 0) return;
+
+		minPixel_X = max(minPixel_X, 0);
+		maxPixel_X = min(maxPixel_X, (int)resolution.x - 1);
+		minPixel_Y = max(minPixel_Y, 0);
+		maxPixel_Y = min(maxPixel_Y, (int)resolution.y - 1);
 
 		glm::vec2 normalPoint;
 		glm::vec3 baryCoord;
@@ -207,6 +219,15 @@ __global__ void rasterizationKernel(const triangle* primitives, int primitivesCo
 				normalPoint = convertPixel2NormalCoord(x, y, resolution);
 				baryCoord = calculateBarycentricCoordinate(targetTriangle, normalPoint);
 				if (isBarycentricCoordInBounds(baryCoord)) { // inside triangle
+					glm::set(tempFragment.position, 
+						normalPoint.x, 
+						normalPoint.y, 
+						getZAtCoordinate(baryCoord, targetTriangle));
+
+					if (tempFragment.position.z < -0.1f || tempFragment.position.z > 1.f) {
+						return;
+					}
+
 					tempFragment.color =
 						baryCoord.x*targetTriangle.c0
 						+ baryCoord.y*targetTriangle.c1
@@ -216,20 +237,19 @@ __global__ void rasterizationKernel(const triangle* primitives, int primitivesCo
 							glm::cross(targetTriangle.p1 - targetTriangle.p0, 
 										targetTriangle.p2 - targetTriangle.p0));
 
-					glm::set(tempFragment.position, 
-						normalPoint.x, 
-						normalPoint.y, 
-						getZAtCoordinate(baryCoord, targetTriangle));
-
-					// get a lock for the pixel (x, y)
-					do {} while (atomicCAS(&fragLocks[pixIdx], 0, 1));
-					// start of critical section
-					if (depthbuffer[pixIdx].position.z < tempFragment.position.z) {
-						memcpy(&depthbuffer[pixIdx], &tempFragment, sizeof(fragment));
+					bool leaveLoop = false;
+					while (!leaveLoop) {
+						if (atomicCAS(&fragLocks[pixIdx], 0, 1) == 0) {
+							// start of critical section
+							if (depthbuffer[pixIdx].position.z > tempFragment.position.z) {
+								memcpy(&depthbuffer[pixIdx], &tempFragment, sizeof(fragment));
+							}
+							// end of critical section	
+							leaveLoop = true;
+							__threadfence();
+							atomicExch(&fragLocks[pixIdx], 0);
+						}
 					}
-					// end of critical section
-					__threadfence();
-					fragLocks[pixIdx] = 0;
 				}
 
 				pixIdx++;
@@ -244,6 +264,15 @@ __global__ void fragmentShadeKernel(fragment* depthbuffer, glm::vec2 resolution)
   int y = (blockIdx.y * blockDim.y) + threadIdx.y;
   int index = x + (y * resolution.x);
   if(x<=resolution.x && y<=resolution.y){
+	  //glm::set(depthbuffer[index].color, 0.5f, 0.f, 0.f);
+	  //float depth = depthbuffer[index].position.z;
+	  //if (depth < 1.f && depth > -1.f) {
+		 // depth += 1.f;
+		 // depth /= 2.f;
+		 // glm::set(depthbuffer[index].color, depth, depth, depth);
+	  //} else {
+		 // glm::set(depthbuffer[index].color, 0.f, 0.f, 0.f);
+	  //}
   }
 }
 
@@ -284,7 +313,7 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame,
   fragment frag;
   frag.color = glm::vec3(0,0,0);
   frag.normal = glm::vec3(0,0,0);
-  frag.position = glm::vec3(0,0,-10000);
+  frag.position = glm::vec3(0,0,10000);
   clearDepthBuffer<<<fullBlocksPerGrid, threadsPerBlock>>>(resolution, depthbuffer,frag);
 
   Light hostLight;
@@ -315,7 +344,7 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame,
 
   MVP_matrix = NULL;
   cudaMalloc((void**)&MVP_matrix, sizeof(cudaMat4));
-  cudaMemcpy( MVP_matrix, &hostMVP_mat, sizeof(cudaMat4), cudaMemcpyHostToDevice);
+  cudaMemcpy( MVP_matrix, hostMVP_mat, sizeof(cudaMat4), cudaMemcpyHostToDevice);
 
   fragLocks = NULL;
   cudaMalloc((void**)&fragLocks, (int)resolution.x*(int)resolution.y*sizeof(int));
@@ -328,7 +357,6 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame,
   //vertex shader
   //------------------------------
   vertexShadeKernel<<<primitiveBlocks, tileSize>>>(device_vbo, vbosize, MVP_matrix);
-
   cudaDeviceSynchronize();
   //------------------------------
   //primitive assembly

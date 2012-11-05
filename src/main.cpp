@@ -37,21 +37,21 @@ int main(int argc, char** argv){
   // initialize a model transform matrix(world->model)
   // currently, support only one object
   glm::vec3 trans(0.f, 0.f, 0.f);
-  glm::vec3 rotat(0.f, 0.f, 0.f);
-  glm::vec3 scale(2.f, 2.f, 2.f);
+  glm::vec3 rotat(25.f, 40.f, 10.f);
+  glm::vec3 scale(0.5f, 0.5f, 0.5f);
   modelMat = new glm::mat4(utilityCore::buildTransformationMatrix(trans, rotat, scale));
 
   // initialize a default camera(eye)
   Eye eye;
   eye.fovy = 45.f;
-  glm::set(eye.position, 0.f, 0.f, 12.f);
+  glm::set(eye.position, 0.f, 0.f, 2.f);
   glm::set(eye.up, 0.f, 1.f, 0.f);
   viewMat = new glm::mat4(glm::lookAt(eye.position, glm::vec3(0.f, 0.f, 0.f), eye.up));
 
   // initialize a perspective projection matrix
-  projectMat = new glm::mat4(glm::perspective(eye.fovy, (float)width/height, 0.1f, 100.f));
+  projectMat = new glm::mat4(glm::perspective(eye.fovy, (float)width/height, 1.f, 100.f));
 
-  hostMVP_matrix = new cudaMat4(utilityCore::glmMat4ToCudaMat4(*projectMat * *viewMat * *modelMat));
+  hostMVP_matrix = new cudaMat4(utilityCore::glmMat4ToCudaMat4(*projectMat * *viewMat * *modelMat ));
 
   frame = 0;
   seconds = time (NULL);
