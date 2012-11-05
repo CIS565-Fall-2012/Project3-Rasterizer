@@ -26,6 +26,9 @@ struct triangle {
 	glm::vec3 w0;
 	glm::vec3 w1;
 	glm::vec3 w2;
+
+	//Back Face Culling
+	bool isCulled;
 };
 
 struct fragment{

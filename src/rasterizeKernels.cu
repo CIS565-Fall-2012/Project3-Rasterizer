@@ -147,23 +147,52 @@ __global__ void vertexShadeKernel(float* vbo, int vbosize, glm::mat4 modelMatrix
 }
 
 //TODO: Implement primative assembly
-__global__ void primitiveAssemblyKernel(float* vbo, int vbosize, float* nbo, int nbosize, float* cbo, int cbosize, int* ibo, int ibosize, triangle* primitives, float* wbo){
+__global__ void primitiveAssemblyKernel(float* vbo, int vbosize, float* nbo, int nbosize, float* cbo, int cbosize, int* ibo, int ibosize, triangle* primitives, float* wbo, glm::mat4 modelMatrix, glm::vec3 CameraPosition){
 	int index = (blockIdx.x * blockDim.x) + threadIdx.x;
 	int primitivesCount = ibosize/3;
 	if(index<primitivesCount){
 		int iboIndex = 3 * index;
 		//printf("\n\n------Primitive Assembly-------");
-		primitives[index].p0 = glm::vec3(vbo[3 * iboIndex], vbo[3 * iboIndex + 1], vbo[3 * iboIndex + 2]);
-		primitives[index].p1 = glm::vec3(vbo[3 * (iboIndex + 1)], vbo[3 * (iboIndex + 1) + 1], vbo[3 * (iboIndex + 1) + 2]);
-		primitives[index].p2 = glm::vec3(vbo[3 * (iboIndex + 2)], vbo[3 * (iboIndex + 2) + 1], vbo[3 * (iboIndex + 2) + 2]);
-
+		//Arrange Normals
 		primitives[index].n0 = glm::vec3(nbo[3 * iboIndex], nbo[3 * iboIndex + 1], nbo[3 * iboIndex + 2]);
 		primitives[index].n1 = glm::vec3(nbo[3 * (iboIndex + 1)], nbo[3 * (iboIndex + 1) + 1], nbo[3 * (iboIndex + 1) + 2]);
 		primitives[index].n2 = glm::vec3(nbo[3 * (iboIndex + 2)], nbo[3 * (iboIndex + 2) + 1], nbo[3 * (iboIndex + 2) + 2]);
+		//Multiply Normals by Model Matrix
+		primitives[index].n0 = glm::normalize(glm::vec3(modelMatrix * glm::vec4(primitives[index].n0, 0.0)));		
+		primitives[index].n1 = glm::normalize(glm::vec3(modelMatrix* glm::vec4(primitives[index].n1, 0.0)));			
+		primitives[index].n2 = glm::normalize(glm::vec3(modelMatrix* glm::vec4(primitives[index].n2, 0.0)));
 
+		//Copy Original Vertices
 		primitives[index].w0 = glm::vec3(wbo[3 * iboIndex], wbo[3 * iboIndex + 1], wbo[3 * iboIndex + 2]);
 		primitives[index].w1 = glm::vec3(wbo[3 * (iboIndex + 1)], wbo[3 * (iboIndex + 1) + 1], wbo[3 * (iboIndex + 1) + 2]);
 		primitives[index].w2 = glm::vec3(wbo[3 * (iboIndex + 2)], wbo[3 * (iboIndex + 2) + 1], wbo[3 * (iboIndex + 2) + 2]);
+
+		//Multiply Vertices by Model Matrix
+		primitives[index].w0 = glm::vec3(modelMatrix * glm::vec4(primitives[index].w0, 1.0f));		//Point in world space
+		primitives[index].w1 = glm::vec3(modelMatrix * glm::vec4(primitives[index].w1, 1.0f));		//Point in world space
+		primitives[index].w2 = glm::vec3(modelMatrix * glm::vec4(primitives[index].w2, 1.0f));	
+
+		glm::vec3 FaceNormal = glm::vec3(primitives[index].n0 + primitives[index].n1 + primitives[index].n2) / 3.0f;
+		glm::vec3 FaceCenter = glm::vec3(primitives[index].w0 + primitives[index].w1 + primitives[index].w2) / 3.0f;
+		FaceNormal = glm::normalize(FaceNormal);
+		glm::vec3 Direction = glm::normalize(FaceCenter - CameraPosition);
+		
+		//Check For Back Face Culling
+		if(glm::dot(FaceNormal, Direction) > 0)
+		{
+			primitives[index].isCulled = true;
+			return;
+		}
+
+		else
+		{
+			primitives[index].isCulled = false;
+		}
+
+		primitives[index].p0 = glm::vec3(vbo[3 * iboIndex], vbo[3 * iboIndex + 1], vbo[3 * iboIndex + 2]);
+		primitives[index].p1 = glm::vec3(vbo[3 * (iboIndex + 1)], vbo[3 * (iboIndex + 1) + 1], vbo[3 * (iboIndex + 1) + 2]);
+		primitives[index].p2 = glm::vec3(vbo[3 * (iboIndex + 2)], vbo[3 * (iboIndex + 2) + 1], vbo[3 * (iboIndex + 2) + 2]);
+		
 
 		//Vertex Color
 		if(cbosize == 9)
@@ -198,15 +227,25 @@ __global__ void primitiveAssemblyKernel(float* vbo, int vbosize, float* nbo, int
 __global__ void rasterizationKernel(triangle* primitives, int primitivesCount, fragment* depthbuffer, glm::vec2 resolution, glm::mat4 modelMatrix, glm::mat4 ViewMatrix,  glm::mat4 Projection, glm::vec4 ViewPort, glm::vec3 CameraPosition){
 	int index = (blockIdx.x * blockDim.x) + threadIdx.x;
 	if(index<primitivesCount){
+		if(primitives[index].isCulled)
+			return;
 		//printf("\n\n------Rasterization-------");
 		glm::vec3 minPoint(0.0, 0.0, 0.0);
 		glm::vec3 maxPoint(0.0, 0.0, 0.0);
 		getAABBForTriangle(primitives[index], minPoint, maxPoint);
 		
+		glm::vec3 WPoint0 = primitives[index].w0;
+		glm::vec3 WPoint1 = primitives[index].w1;
+		glm::vec3 WPoint2 = primitives[index].w2;
+
+		glm::vec3 NPoint0 = primitives[index].n0;
+		glm::vec3 NPoint1 = primitives[index].n1;
+		glm::vec3 NPoint2 = primitives[index].n2;
+
 		//Calculate Points after Model View Transformation
-		glm::vec3 WPoint0 = glm::vec3(modelMatrix * glm::vec4(primitives[index].w0, 1.0f));		//Point in world space
-		glm::vec3 WPoint1 = glm::vec3(modelMatrix * glm::vec4(primitives[index].w1, 1.0f));			//Point in world space
-		glm::vec3 WPoint2 = glm::vec3(modelMatrix * glm::vec4(primitives[index].w2, 1.0f));		
+		//glm::vec3 WPoint0 = glm::vec3(modelMatrix * glm::vec4(primitives[index].w0, 1.0f));		//Point in world space
+		//glm::vec3 WPoint1 = glm::vec3(modelMatrix * glm::vec4(primitives[index].w1, 1.0f));			//Point in world space
+		//glm::vec3 WPoint2 = glm::vec3(modelMatrix * glm::vec4(primitives[index].w2, 1.0f));		
 
 		//Calculate the Original Points -> Even before tansformations are applied
 		//glm::vec3 OPoint0 = glm::unProject(primitives[index].p0, ViewMatrix * modelMatrix, Projection, ViewPort);		//Point in world space
@@ -227,9 +266,9 @@ __global__ void rasterizationKernel(triangle* primitives, int primitivesCount, f
 		//Calculate the ModelView Normals
 
 		//Normals in world space
-		glm::vec3 NPoint0 = glm::normalize(glm::vec3(modelMatrix * glm::vec4(primitives[index].n0, 0.0)));		
-		glm::vec3 NPoint1 = glm::normalize(glm::vec3(modelMatrix* glm::vec4(primitives[index].n1, 0.0)));			
-		glm::vec3 NPoint2 = glm::normalize(glm::vec3(modelMatrix* glm::vec4(primitives[index].n2, 0.0)));
+		//glm::vec3 NPoint0 = glm::normalize(glm::vec3(modelMatrix * glm::vec4(primitives[index].n0, 0.0)));		
+		//glm::vec3 NPoint1 = glm::normalize(glm::vec3(modelMatrix* glm::vec4(primitives[index].n1, 0.0)));			
+		//glm::vec3 NPoint2 = glm::normalize(glm::vec3(modelMatrix* glm::vec4(primitives[index].n2, 0.0)));
 		//Above-> Normals in World Space
 
 
@@ -492,7 +531,7 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float*
 	//primitive assembly
 	//------------------------------
 	primitiveBlocks = ceil(((float)ibosize/3)/((float)tileSize));
-	primitiveAssemblyKernel<<<primitiveBlocks, tileSize>>>(device_vbo, vbosize, device_nbo, nbosize, device_cbo, cbosize, device_ibo, ibosize, primitives, device_wbo);
+	primitiveAssemblyKernel<<<primitiveBlocks, tileSize>>>(device_vbo, vbosize, device_nbo, nbosize, device_cbo, cbosize, device_ibo, ibosize, primitives, device_wbo, modelMatrix, CameraPosition);
 	
 	cudaDeviceSynchronize();
 	//------------------------------
