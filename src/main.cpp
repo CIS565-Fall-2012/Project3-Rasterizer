@@ -51,7 +51,7 @@ int main(int argc, char** argv){
 
   // initialize a default camera(eye)
   eye.fovy = 45.f;
-  glm::set(eye.position, 0.f, 0.f, 2.f);
+  glm::set(eye.position, 0.f, 0.f, 1.5f);
   glm::set(eye.up, 0.f, 1.f, 0.f);
   viewMat = new glm::mat4(glm::lookAt(eye.position, glm::vec3(0.f, 0.f, 0.f), eye.up));
 
@@ -138,10 +138,12 @@ void runCuda(){
   *viewMat = glm::lookAt(eye.position, glm::vec3(0.f, 0.f, 0.f), eye.up);
   *hostMVP_matrix = utilityCore::glmMat4ToCudaMat4(*projectMat * *viewMat * *modelMat);
 
+  glm::vec4 normalizedEyePos = *projectMat * glm::vec4(0.f, 0.f, 0.f, 1.f);
+
   cudaGLMapBufferObject((void**)&dptr, pbo);
   cudaRasterizeCore(dptr, glm::vec2(width, height), frame, 
 	                vbo, vbosize, cbo, cbosize, ibo, ibosize,
-					hostMVP_matrix);
+					hostMVP_matrix, glm::vec3(normalizedEyePos.x, normalizedEyePos.y, normalizedEyePos.z));
   cudaGLUnmapBufferObject(pbo);
 
   vbo = NULL;
@@ -264,8 +266,8 @@ void runCuda(){
   void motion_left(int x, int y)
   {// callback function for motion when left button is pressed
 	  if (!(x < 0 || x > width || y < 0 || y > height)) {
-		  float theta = (x - prev_mouse_x)*90.f/width;
-		  float rho = -(y - prev_mouse_y)*90.f/height;
+		  float theta = -(x - prev_mouse_x)*90.f/width;
+		  float rho = (y - prev_mouse_y)*90.f/height;
 
 		  SyncAndResetCUDA();
 

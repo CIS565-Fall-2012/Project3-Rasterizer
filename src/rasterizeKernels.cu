@@ -259,7 +259,8 @@ __global__ void rasterizationKernel(const triangle* primitives, int primitivesCo
 }
 
 //TODO: Implement a fragment shader
-__global__ void fragmentShadeKernel(fragment* depthbuffer, glm::vec2 resolution){
+__global__ void fragmentShadeKernel(fragment* depthbuffer, glm::vec2 resolution, 
+									const Light* light, glm::vec3 eyePosition){
   int x = (blockIdx.x * blockDim.x) + threadIdx.x;
   int y = (blockIdx.y * blockDim.y) + threadIdx.y;
   int index = x + (y * resolution.x);
@@ -273,6 +274,19 @@ __global__ void fragmentShadeKernel(fragment* depthbuffer, glm::vec2 resolution)
 	  //} else {
 		 // glm::set(depthbuffer[index].color, 0.f, 0.f, 0.f);
 	  //}
+
+	  glm::vec3 currPoint = depthbuffer[index].position;
+	  glm::vec3 normal = depthbuffer[index].normal;
+
+	  glm::vec3 L = glm::normalize(light->position - currPoint);
+	  float diffuse = max(glm::dot(normal, L), 0.f);
+
+	  eyePosition = glm::vec3(0.f);
+	  glm::vec3 V = glm::normalize(eyePosition - currPoint);
+	  glm::vec3 H = glm::normalize(L + V);
+	  float specular = max(pow(glm::dot(H, normal), 5.f), 0.f);
+
+	  depthbuffer[index].color = (0.4f*diffuse + 0.6f*specular) * light->color;
   }
 }
 
@@ -291,7 +305,7 @@ __global__ void render(glm::vec2 resolution, fragment* depthbuffer, glm::vec3* f
 // Wrapper for the __global__ call that sets up the kernel calls and does a ton of memory management
 void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, 
                        float* vbo, int vbosize, float* cbo, int cbosize, int* ibo, int ibosize,
-					   const cudaMat4* hostMVP_mat)
+					   const cudaMat4* hostMVP_mat, glm::vec3 eyePosition)
 {
 
   // set up crucial magic
@@ -318,7 +332,7 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame,
 
   Light hostLight;
   glm::set(hostLight.color, 1.f, 1.f, 1.f);
-  glm::set(hostLight.position, 0.f, 0.f, -12.f);
+  hostLight.position = eyePosition;
 
   //------------------------------
   //memory stuff
@@ -374,7 +388,7 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame,
   //------------------------------
   //fragment shader
   //------------------------------
-  fragmentShadeKernel<<<fullBlocksPerGrid, threadsPerBlock>>>(depthbuffer, resolution);
+  fragmentShadeKernel<<<fullBlocksPerGrid, threadsPerBlock>>>(depthbuffer, resolution, light, eyePosition);
 
   cudaDeviceSynchronize();
   //------------------------------
