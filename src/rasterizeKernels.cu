@@ -15,6 +15,8 @@ float* device_vbo;
 float* device_nbo;
 float* device_cbo;
 float* device_wbo;
+float* device_tbo;
+float* device_tMap;
 int* device_ibo;
 triangle* primitives;
 
@@ -147,7 +149,7 @@ __global__ void vertexShadeKernel(float* vbo, int vbosize, glm::mat4 modelMatrix
 }
 
 //TODO: Implement primative assembly
-__global__ void primitiveAssemblyKernel(float* vbo, int vbosize, float* nbo, int nbosize, float* cbo, int cbosize, int* ibo, int ibosize, triangle* primitives, float* wbo, glm::mat4 modelMatrix, glm::vec3 CameraPosition){
+__global__ void primitiveAssemblyKernel(float* vbo, int vbosize, float* nbo, int nbosize, float* cbo, int cbosize, int* ibo, int ibosize, float* tbo, int tbosize, float* tMap, int tMapsize, int tMapWidth, int tMapHeight, triangle* primitives, float* wbo, glm::mat4 modelMatrix, glm::vec3 CameraPosition){
 	int index = (blockIdx.x * blockDim.x) + threadIdx.x;
 	int primitivesCount = ibosize/3;
 	if(index<primitivesCount){
@@ -194,6 +196,14 @@ __global__ void primitiveAssemblyKernel(float* vbo, int vbosize, float* nbo, int
 		primitives[index].p1 = glm::vec3(vbo[3 * (iboIndex + 1)], vbo[3 * (iboIndex + 1) + 1], vbo[3 * (iboIndex + 1) + 2]);
 		primitives[index].p2 = glm::vec3(vbo[3 * (iboIndex + 2)], vbo[3 * (iboIndex + 2) + 1], vbo[3 * (iboIndex + 2) + 2]);
 		
+		primitives[index].hasTexture = false;
+		if(tbosize > 0 && tMapsize >0)
+		{
+			primitives[index].hasTexture = true;
+			primitives[index].uv0 = glm::vec3(tbo[3 * iboIndex], tbo[3 * iboIndex + 1], tbo[3 * iboIndex + 2]);
+			primitives[index].uv1 = glm::vec3(tbo[3 * (iboIndex + 1)], tbo[3 * (iboIndex + 1) + 1], tbo[3 * (iboIndex + 1) + 2]);
+			primitives[index].uv2 = glm::vec3(tbo[3 * (iboIndex + 2)], tbo[3 * (iboIndex + 2) + 1], tbo[3 * (iboIndex + 2) + 2]);
+		}
 
 		//Vertex Color
 		if(cbosize == 9)
@@ -225,7 +235,7 @@ __global__ void primitiveAssemblyKernel(float* vbo, int vbosize, float* nbo, int
 }
 
 //TODO: Implement a rasterization method, such as scanline.
-__global__ void rasterizationKernel(triangle* primitives, int primitivesCount, fragment* depthbuffer, glm::vec2 resolution, glm::mat4 modelMatrix, glm::mat4 ViewMatrix,  glm::mat4 Projection, glm::vec4 ViewPort, glm::vec3 CameraPosition){
+__global__ void rasterizationKernel(triangle* primitives, int primitivesCount, fragment* depthbuffer, glm::vec2 resolution, glm::mat4 modelMatrix, glm::mat4 ViewMatrix,  glm::mat4 Projection, glm::vec4 ViewPort, glm::vec3 CameraPosition, float* tMap, int tMapWidth, int tMapHeight, bool UseTextures){
 	int index = (blockIdx.x * blockDim.x) + threadIdx.x;
 	if(index<primitivesCount){
 		if(primitives[index].isCulled)
@@ -356,7 +366,26 @@ __global__ void rasterizationKernel(triangle* primitives, int primitivesCount, f
 					int bufIndex = ypix * resolution.x + xpix;
 					
 					fragment fragXY;
-					fragXY.color = BPoint.x * primitives[index].c0 + BPoint.y * primitives[index].c1 + BPoint.z * primitives[index].c2;
+					if(primitives[index].hasTexture && UseTextures)
+					{
+						glm::vec3 UV = BPoint.x * primitives[index].uv0 + BPoint.y * primitives[index].uv1 + BPoint.z * primitives[index].uv2;
+						int XCoord = UV.x * tMapWidth;
+						int YCoord = UV.y * tMapHeight;
+						if(XCoord < 0 || XCoord > tMapWidth || YCoord < 0 || YCoord >tMapHeight)
+						{
+							fragXY.color = glm::vec3(1,1,0);
+						}
+						else
+						{
+							fragXY.color.x = tMap[3 * (YCoord * tMapWidth + XCoord)];
+							fragXY.color.y = tMap[3 * (YCoord * tMapWidth + XCoord) + 1];
+							fragXY.color.z = tMap[3 * (YCoord * tMapWidth + XCoord) + 2];
+						}
+					}
+					else
+					{
+						fragXY.color = BPoint.x * primitives[index].c0 + BPoint.y * primitives[index].c1 + BPoint.z * primitives[index].c2;
+					}
 					fragXY.normal = glm::normalize(BPoint.x * NPoint0 + BPoint.y * NPoint1 + BPoint.z * NPoint2);
 					//fragXY.orig_position = glm::vec3(modelMatrix * glm::vec4(WPoint, 1.0));
 					
@@ -456,7 +485,7 @@ __global__ void render(glm::vec2 resolution, fragment* depthbuffer, glm::vec3* f
 }
 
 // Wrapper for the __global__ call that sets up the kernel calls and does a ton of memory management
-void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float* vbo, int vbosize, float* nbo, int nbosize, float* cbo, int cbosize, int* ibo, int ibosize, glm::mat4 modelMatrix, glm::mat4 ViewMatrix, glm::mat4 Projection, glm::vec4 ViewPort, glm::vec3 CameraPosition, glm::vec3 LightPosition, glm::vec3 LightColor, glm::vec3 AmbientColor, float specularCoefficient)
+void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float* vbo, int vbosize, float* nbo, int nbosize, float* cbo, int cbosize, int* ibo, int ibosize, float* tbo, int tbosize, glm::mat4 modelMatrix, glm::mat4 ViewMatrix, glm::mat4 Projection, glm::vec4 ViewPort, glm::vec3 CameraPosition, glm::vec3 LightPosition, glm::vec3 LightColor, glm::vec3 AmbientColor, float specularCoefficient, float* tMap, int tMapsize, int tMapWidth, int tMapHeight)
 {
 
 	// set up crucial magic
@@ -522,6 +551,14 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float*
 	tileSize = 32;
 	int primitiveBlocks = ceil(((float)vbosize/3)/((float)tileSize));
 
+	device_tbo = NULL;
+	cudaMalloc((void**)&device_tbo, tbosize*sizeof(float));
+	cudaMemcpy( device_tbo, tbo, tbosize*sizeof(float), cudaMemcpyHostToDevice);
+
+	device_tMap = NULL;
+	cudaMalloc((void**)&device_tMap, tMapsize*sizeof(float));
+	cudaMemcpy( device_tMap, tMap, tMapsize*sizeof(float), cudaMemcpyHostToDevice);
+
 	//------------------------------
 	//vertex shader
 	//------------------------------
@@ -532,13 +569,13 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float*
 	//primitive assembly
 	//------------------------------
 	primitiveBlocks = ceil(((float)ibosize/3)/((float)tileSize));
-	primitiveAssemblyKernel<<<primitiveBlocks, tileSize>>>(device_vbo, vbosize, device_nbo, nbosize, device_cbo, cbosize, device_ibo, ibosize, primitives, device_wbo, modelMatrix, CameraPosition);
+	primitiveAssemblyKernel<<<primitiveBlocks, tileSize>>>(device_vbo, vbosize, device_nbo, nbosize, device_cbo, cbosize, device_ibo, ibosize, device_tbo, tbosize, device_tMap, tMapsize, tMapWidth, tMapHeight, primitives, device_wbo, modelMatrix, CameraPosition);
 	
 	cudaDeviceSynchronize();
 	//------------------------------
 	//rasterization
 	//------------------------------
-	rasterizationKernel<<<primitiveBlocks, tileSize>>>(primitives, ibosize/3, depthbuffer, resolution, modelMatrix, ViewMatrix, Projection, ViewPort, CameraPosition);
+	rasterizationKernel<<<primitiveBlocks, tileSize>>>(primitives, ibosize/3, depthbuffer, resolution, modelMatrix, ViewMatrix, Projection, ViewPort, CameraPosition, device_tMap, tMapWidth, tMapHeight, UseTextures);
 	
 	cudaDeviceSynchronize();
 	//------------------------------
@@ -570,6 +607,8 @@ void kernelCleanup(){
   cudaFree( device_nbo );
   cudaFree( device_cbo );
   cudaFree( device_ibo );
+  cudaFree( device_tbo );
+  cudaFree( device_tMap );
   cudaFree( framebuffer );
   cudaFree( depthbuffer );
 }

@@ -48,7 +48,7 @@ int main(int argc, char** argv){
 	return 0;
   }
 
-  if(tMapsize != -1)
+  if(tMapsize > 0)
 	  cout << "Texture Loaded" << endl;
   else
 	  cout << "No Textures Loaded" << endl;
@@ -158,7 +158,7 @@ void runCuda(){
 	cbosize = 9;
 	*/
 
-	mesh->setColor(glm::vec3(1.0, 1.0, 1.0));
+	mesh->setColor(glm::vec3(1.0, 0.0, 0.0));
 	cbo = mesh->getCBO();
 	cbosize = mesh->getCBOsize();
 
@@ -170,7 +170,7 @@ void runCuda(){
 
 	cudaGLMapBufferObject((void**)&dptr, pbo);
 	
-	cudaRasterizeCore(dptr, glm::vec2(width, height), frame, vbo, vbosize, nbo, nbosize, cbo, cbosize, ibo, ibosize, modelMatrix, ViewMatrix, Projection, ViewPort, CameraPosition, LightPosition, LightColor, AmbientColor, specularCoefficient);
+	cudaRasterizeCore(dptr, glm::vec2(width, height), frame, vbo, vbosize, nbo, nbosize, cbo, cbosize, ibo, ibosize, tbo, tbosize, modelMatrix, ViewMatrix, Projection, ViewPort, CameraPosition, LightPosition, LightColor, AmbientColor, specularCoefficient, tMap, tMapsize, tMapWidth, tMapHeight);
 	
 	cudaGLUnmapBufferObject(pbo);
 
@@ -349,6 +349,10 @@ void keyboard(unsigned char key, int x, int y)
 
 		case'5':
 			UseDepthShade = !UseDepthShade;
+			break;
+
+		case'6':
+			UseTextures = !UseTextures;
 			break;
 	}
 }

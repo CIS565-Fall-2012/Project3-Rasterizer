@@ -64,9 +64,9 @@ int tbosize;
 
 //Texture Map Variables
 float* tMap;
-int tMapsize = -1;
-int tMapWidth;
-int tMapHeight;
+int tMapsize = 0;
+int tMapWidth = 0;
+int tMapHeight = 0;
 
 //-------------------------------
 //----------CUDA & Camera STUFF-----------
@@ -80,6 +80,7 @@ bool UseDiffuseShade = true;
 bool UseSpecularShade = true;
 bool UseAmbientShade = true;
 bool UseDepthShade = false;
+bool UseTextures = true;
 //////////////////////////////Specify Mesh Model Matrix Values Here///////////////////////////////////
 glm::vec3 mTranslate = glm::vec3(0.0, 0.0, 0.0);
 glm::vec3 mRotate = glm::vec3(0.0, 0.0, 0.0);

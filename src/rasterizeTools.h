@@ -29,6 +29,12 @@ struct triangle {
 
 	//Back Face Culling
 	bool isCulled;
+
+	//UV Texture Map - Using vec3 to keep ibo consistent
+	bool hasTexture;
+	glm::vec3 uv0;
+	glm::vec3 uv1;
+	glm::vec3 uv2;
 };
 
 struct fragment{
