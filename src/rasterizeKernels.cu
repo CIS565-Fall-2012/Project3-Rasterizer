@@ -260,7 +260,7 @@ __global__ void rasterizationKernel(const triangle* primitives, int primitivesCo
 
 //TODO: Implement a fragment shader
 __global__ void fragmentShadeKernel(fragment* depthbuffer, glm::vec2 resolution, 
-									const Light* light, glm::vec3 eyePosition){
+									const Light* light, glm::vec3 eyePosition, bool isCboEnabled){
   int x = (blockIdx.x * blockDim.x) + threadIdx.x;
   int y = (blockIdx.y * blockDim.y) + threadIdx.y;
   int index = x + (y * resolution.x);
@@ -286,7 +286,11 @@ __global__ void fragmentShadeKernel(fragment* depthbuffer, glm::vec2 resolution,
 	  glm::vec3 H = glm::normalize(L + V);
 	  float specular = max(pow(glm::dot(H, normal), 5.f), 0.f);
 
-	  depthbuffer[index].color = (0.4f*diffuse + 0.6f*specular) * light->color;
+	  if (isCboEnabled) {
+		  depthbuffer[index].color *= (0.4f*diffuse + 0.6f*specular) * light->color;
+	  } else {
+		  depthbuffer[index].color = (0.4f*diffuse + 0.6f*specular) * light->color;
+	  }
   }
 }
 
@@ -305,7 +309,7 @@ __global__ void render(glm::vec2 resolution, fragment* depthbuffer, glm::vec3* f
 // Wrapper for the __global__ call that sets up the kernel calls and does a ton of memory management
 void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, 
                        float* vbo, int vbosize, float* cbo, int cbosize, int* ibo, int ibosize,
-					   const cudaMat4* hostMVP_mat, glm::vec3 eyePosition)
+					   const cudaMat4* hostMVP_mat, glm::vec3 eyePosition, bool isCboEnabled)
 {
 
   // set up crucial magic
@@ -388,7 +392,7 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame,
   //------------------------------
   //fragment shader
   //------------------------------
-  fragmentShadeKernel<<<fullBlocksPerGrid, threadsPerBlock>>>(depthbuffer, resolution, light, eyePosition);
+  fragmentShadeKernel<<<fullBlocksPerGrid, threadsPerBlock>>>(depthbuffer, resolution, light, eyePosition, isCboEnabled);
 
   cudaDeviceSynchronize();
   //------------------------------
