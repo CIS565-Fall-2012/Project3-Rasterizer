@@ -18,6 +18,7 @@ glm::vec3 modelTrans(0.f, 0.f, 0.f);
 glm::vec3 modelRotat(0.f, 0.f, 0.f);
 glm::vec3 modelScale(0.5f, 0.5f, 0.5f);
 bool isCboEnabled = true;
+bool isAntiAliasingEnabled = true;
 /**************************************************/
 
 //-------------------------------
@@ -145,7 +146,7 @@ void runCuda(){
   cudaRasterizeCore(dptr, glm::vec2(width, height), frame, 
 	                vbo, vbosize, cbo, cbosize, ibo, ibosize,
 					hostMVP_matrix, glm::vec3(normalizedEyePos.x, normalizedEyePos.y, normalizedEyePos.z),
-					isCboEnabled);
+					isCboEnabled, isAntiAliasingEnabled);
   cudaGLUnmapBufferObject(pbo);
 
   vbo = NULL;
@@ -231,6 +232,10 @@ void runCuda(){
 	   case('c'):
 	   case('C'):
 		 isCboEnabled = !isCboEnabled;
+		 break;
+	   case('i'):
+	   case('I'):
+		 isAntiAliasingEnabled = !isAntiAliasingEnabled;
 		 break;
     }
   }

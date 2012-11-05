@@ -171,7 +171,7 @@ __global__ void primitiveAssemblyKernel(float* vbo, int vbosize, float* cbo, int
   }
 }
 
-__host__ __device__ glm::vec2 convertPixel2NormalCoord(int pixelX, int pixelY, glm::vec2 resolution)
+__host__ __device__ glm::vec2 convertPixel2NormalCoord(float pixelX, float pixelY, glm::vec2 resolution)
 {
 	glm::vec2 normalPoint;
 	normalPoint.x = (2*pixelX + 1 - resolution.x)/resolution.x;
@@ -216,7 +216,7 @@ __global__ void rasterizationKernel(const triangle* primitives, int primitivesCo
 			pixIdx = y*(int)resolution.x + minPixel_X;
 			for (int x = minPixel_X; x <= maxPixel_X; x++) {
 				// detect an intersection in the triangle
-				normalPoint = convertPixel2NormalCoord(x, y, resolution);
+				normalPoint = convertPixel2NormalCoord((float)x, (float)y, resolution);
 				baryCoord = calculateBarycentricCoordinate(targetTriangle, normalPoint);
 				if (isBarycentricCoordInBounds(baryCoord)) { // inside triangle
 					glm::set(tempFragment.position, 
@@ -260,7 +260,8 @@ __global__ void rasterizationKernel(const triangle* primitives, int primitivesCo
 
 //TODO: Implement a fragment shader
 __global__ void fragmentShadeKernel(fragment* depthbuffer, glm::vec2 resolution, 
-									const Light* light, glm::vec3 eyePosition, bool isCboEnabled){
+									const Light* light, glm::vec3 eyePosition, bool isCboEnabled, 
+									bool isAntiAliasingEnabled, glm::vec3* framebuffer){
   int x = (blockIdx.x * blockDim.x) + threadIdx.x;
   int y = (blockIdx.y * blockDim.y) + threadIdx.y;
   int index = x + (y * resolution.x);
@@ -291,25 +292,99 @@ __global__ void fragmentShadeKernel(fragment* depthbuffer, glm::vec2 resolution,
 	  } else {
 		  depthbuffer[index].color = (0.4f*diffuse + 0.6f*specular) * light->color;
 	  }
+
+	  if (isAntiAliasingEnabled) {
+		  // use super-sampling
+		  thrust::default_random_engine rng(hash(index));
+		  thrust::uniform_real_distribution<float> u01(0,1);
+		  int numOfSuperSamples = 0;
+		  glm::vec3 colorAccumulator = depthbuffer[index].color;
+
+		  if (x > 0 && x < (int)resolution.x && y > 0 && y < (int)resolution.y) {			  
+			  numOfSuperSamples += 8;
+			  colorAccumulator += depthbuffer[index-(int)resolution.x-1].color; // upper-left
+			  colorAccumulator += depthbuffer[index-(int)resolution.x].color; // upper
+			  colorAccumulator += depthbuffer[index-(int)resolution.x+1].color; // upper-right
+			  colorAccumulator += depthbuffer[index-1].color; // left
+			  colorAccumulator += depthbuffer[index+1].color; // right
+			  colorAccumulator += depthbuffer[index+(int)resolution.x-1].color; // bottom-left
+			  colorAccumulator += depthbuffer[index+(int)resolution.x].color; // bottom
+			  colorAccumulator += depthbuffer[index+(int)resolution.x+1].color; // bottom-right
+		  } else if ((x == 0 && y == 0)) {
+			  numOfSuperSamples += 3;
+			  colorAccumulator += depthbuffer[1].color; // right
+			  colorAccumulator += depthbuffer[(int)resolution.x].color; // bottom
+			  colorAccumulator += depthbuffer[(int)resolution.x+1].color; // bottom-right
+		  } else if (x == (int)resolution.x-1 && y == (int)resolution.y-1) {
+			  numOfSuperSamples += 3;
+			  colorAccumulator += depthbuffer[index-(int)resolution.x-1].color; // upper-left
+			  colorAccumulator += depthbuffer[index-(int)resolution.x].color; // upper
+			  colorAccumulator += depthbuffer[index-1].color; // left
+		  } else if (x == 0 && y == (int)resolution.y-1) {
+			  numOfSuperSamples += 3;
+			  colorAccumulator += depthbuffer[index-(int)resolution.x].color; // upper
+			  colorAccumulator += depthbuffer[index-(int)resolution.x+1].color; // upper-right
+			  colorAccumulator += depthbuffer[index+1].color; // right
+		  } else if (x == (int)resolution.x-1 && y == 0) {
+			  numOfSuperSamples += 3;
+			  colorAccumulator += depthbuffer[index-1].color; // left
+			  colorAccumulator += depthbuffer[index+(int)resolution.x-1].color; // bottom-left
+			  colorAccumulator += depthbuffer[index+(int)resolution.x].color; // bottom
+		  } else if (x == 0) {
+			  numOfSuperSamples += 5;
+			  colorAccumulator += depthbuffer[index-(int)resolution.x].color; // upper
+			  colorAccumulator += depthbuffer[index-(int)resolution.x+1].color; // upper-right
+			  colorAccumulator += depthbuffer[index+1].color; // right
+			  colorAccumulator += depthbuffer[index+(int)resolution.x].color; // bottom
+			  colorAccumulator += depthbuffer[index+(int)resolution.x+1].color; // bottom-right
+		  } else if (x == (int)resolution.x-1) {
+			  numOfSuperSamples += 5;
+			  colorAccumulator += depthbuffer[index-(int)resolution.x-1].color; // upper-left
+			  colorAccumulator += depthbuffer[index-(int)resolution.x].color; // upper
+			  colorAccumulator += depthbuffer[index-1].color; // left
+			  colorAccumulator += depthbuffer[index+(int)resolution.x-1].color; // bottom-left
+			  colorAccumulator += depthbuffer[index+(int)resolution.x].color; // bottom
+		  } else if (y == 0) {
+			  numOfSuperSamples += 5;
+			  colorAccumulator += depthbuffer[index-(int)resolution.x].color; // upper
+			  colorAccumulator += depthbuffer[index-(int)resolution.x+1].color; // upper-right
+			  colorAccumulator += depthbuffer[index+1].color; // right
+			  colorAccumulator += depthbuffer[index+(int)resolution.x].color; // bottom
+			  colorAccumulator += depthbuffer[index+(int)resolution.x+1].color; // bottom-right
+		  } else if (y == (int)resolution.y-1) {
+			  numOfSuperSamples += 5;
+			  colorAccumulator += depthbuffer[index-(int)resolution.x-1].color; // upper-left
+			  colorAccumulator += depthbuffer[index-(int)resolution.x].color; // upper
+			  colorAccumulator += depthbuffer[index-1].color; // left
+			  colorAccumulator += depthbuffer[index+(int)resolution.x-1].color; // bottom-left
+			  colorAccumulator += depthbuffer[index+(int)resolution.x].color; // bottom
+		  }
+
+		  colorAccumulator /= (float)(numOfSuperSamples + 1);
+		  framebuffer[index] = colorAccumulator;
+	  }
   }
 }
 
 //Writes fragment colors to the framebuffer
-__global__ void render(glm::vec2 resolution, fragment* depthbuffer, glm::vec3* framebuffer){
+__global__ void render(glm::vec2 resolution, fragment* depthbuffer, glm::vec3* framebuffer, bool isAntiAliasingEnabled){
 
-  int x = (blockIdx.x * blockDim.x) + threadIdx.x;
-  int y = (blockIdx.y * blockDim.y) + threadIdx.y;
-  int index = x + (y * resolution.x);
+	int x = (blockIdx.x * blockDim.x) + threadIdx.x;
+	int y = (blockIdx.y * blockDim.y) + threadIdx.y;
+	int index = x + (y * resolution.x);
 
-  if(x<=resolution.x && y<=resolution.y){
-    framebuffer[index] = depthbuffer[index].color;
-  }
+	if(x<=resolution.x && y<=resolution.y){
+		if (!isAntiAliasingEnabled) {
+			framebuffer[index] = depthbuffer[index].color;
+		}
+	}
 }
 
 // Wrapper for the __global__ call that sets up the kernel calls and does a ton of memory management
 void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, 
                        float* vbo, int vbosize, float* cbo, int cbosize, int* ibo, int ibosize,
-					   const cudaMat4* hostMVP_mat, glm::vec3 eyePosition, bool isCboEnabled)
+					   const cudaMat4* hostMVP_mat, glm::vec3 eyePosition, 
+					   bool isCboEnabled, bool isAntiAliasingEnabled)
 {
 
   // set up crucial magic
@@ -392,13 +467,14 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame,
   //------------------------------
   //fragment shader
   //------------------------------
-  fragmentShadeKernel<<<fullBlocksPerGrid, threadsPerBlock>>>(depthbuffer, resolution, light, eyePosition, isCboEnabled);
+  fragmentShadeKernel<<<fullBlocksPerGrid, threadsPerBlock>>>(depthbuffer, resolution, light, eyePosition, isCboEnabled, 
+	  isAntiAliasingEnabled, framebuffer);
 
   cudaDeviceSynchronize();
   //------------------------------
   //write fragments to framebuffer
   //------------------------------
-  render<<<fullBlocksPerGrid, threadsPerBlock>>>(resolution, depthbuffer, framebuffer);
+  render<<<fullBlocksPerGrid, threadsPerBlock>>>(resolution, depthbuffer, framebuffer, isAntiAliasingEnabled);
   sendImageToPBO<<<fullBlocksPerGrid, threadsPerBlock>>>(PBOpos, resolution, framebuffer);
 
   cudaDeviceSynchronize();
