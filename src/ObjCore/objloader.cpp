@@ -99,7 +99,14 @@ objLoader::objLoader(string filename, obj* newMesh){
 					}
 					geomesh->addFace(pointList);
 					geomesh->addFaceNormal(normalList);
-					geomesh->addFaceTexture(texturecoordList);
+					bool hasTexture = false;
+					for(int i=0; i<texturecoordList.size(); i++)
+					{
+						if(texturecoordList[i] != 0 && texturecoordList[i] != -1)
+							hasTexture = true;
+					}
+					if(hasTexture)
+						geomesh->addFaceTexture(texturecoordList);
 				}else{
 					string v;
 					vector<int> pointList;

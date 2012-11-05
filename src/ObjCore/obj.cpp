@@ -40,11 +40,17 @@ void obj::buildVBOs(){
 	vector<float> VBOvec;
 	vector<float> NBOvec;
 	vector<int> IBOvec;
+	vector<float> TBOvec;
 	int index = 0;
 	bool genNormals = false;
 	if(faces.size()!=facenormals.size()){
 		genNormals = true;
 	}
+
+	bool hasTextures = false;
+	if(faces.size() == facetextures.size())
+		hasTextures = true;
+
 	for(int k = 0; k<faces.size(); k++){
 
 		if(isConvex(faces[k])==true){
@@ -75,6 +81,17 @@ void obj::buildVBOs(){
 					NBOvec.push_back(n[0]); NBOvec.push_back(n[1]); NBOvec.push_back(n[2]); //NBOvec.push_back(0.0f);
 				}
 
+				if(hasTextures)
+				{
+					vector<int> faceTs = facetextures[k];
+					glm::vec4 t0 = texturecoords[faceTs[0]];
+					glm::vec4 t1 = texturecoords[faceTs[i-1]];
+					glm::vec4 t2 = texturecoords[faceTs[i]];
+					TBOvec.push_back(t0[0]); TBOvec.push_back(t0[1]); TBOvec.push_back(t0[2]); //TBOvec.push_back(1.0f);
+					TBOvec.push_back(t1[0]); TBOvec.push_back(t1[1]); TBOvec.push_back(t1[2]); //TBOvec.push_back(1.0f);
+					TBOvec.push_back(t2[0]); TBOvec.push_back(t2[1]); TBOvec.push_back(t2[2]); //TBOvec.push_back(1.0f);
+				}
+
 				IBOvec.push_back(index+0); IBOvec.push_back(index+1); IBOvec.push_back(index+2);
 
 				index=index+3;
@@ -85,9 +102,12 @@ void obj::buildVBOs(){
 	vbo = new float[VBOvec.size()];
 	nbo = new float[NBOvec.size()];
 	ibo = new int[IBOvec.size()];
+	tbo = new float[TBOvec.size()];
 	vbosize = (int)VBOvec.size();
 	nbosize = (int)NBOvec.size();
 	ibosize = (int)IBOvec.size();
+	tbosize = (int)TBOvec.size();
+
 	for(int i=0; i<VBOvec.size(); i++){
 		vbo[i] = VBOvec[i];
 	}
@@ -96,6 +116,9 @@ void obj::buildVBOs(){
 	}
 	for(int i=0; i<IBOvec.size(); i++){
 		ibo[i] = IBOvec[i];
+	}
+	for(int i=0; i<TBOvec.size(); i++){
+		tbo[i] = TBOvec[i];
 	}
 	setColor(glm::vec3(.4,.4,.4));
 }
@@ -313,6 +336,10 @@ int* obj::getIBO(){
 	return ibo;
 }
 
+float* obj::getTBO(){
+	return tbo;
+}
+
 int obj::getVBOsize(){
 	return vbosize;
 }
@@ -329,3 +356,6 @@ int obj::getCBOsize(){
 	return cbosize;
 }
 
+int obj::getTBOsize(){
+	return tbosize;
+}

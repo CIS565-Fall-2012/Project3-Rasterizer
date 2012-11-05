@@ -14,6 +14,18 @@
       <Filter>ObjCore</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\camera.h" />
+    <ClInclude Include="..\..\src\EasyBMP.h">
+      <Filter>EasyBMP</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\EasyBMP_BMP.h">
+      <Filter>EasyBMP</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\EasyBMP_DataStructures.h">
+      <Filter>EasyBMP</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\EasyBMP_VariousBMPutilities.h">
+      <Filter>EasyBMP</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\glslUtility.cpp" />
@@ -26,6 +38,9 @@
       <Filter>ObjCore</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\camera.cpp" />
+    <ClCompile Include="..\..\src\EasyBMP.cpp">
+      <Filter>EasyBMP</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="..\..\src\rasterizeKernels.cu" />
@@ -33,6 +48,9 @@
   <ItemGroup>
     <Filter Include="ObjCore">
       <UniqueIdentifier>{c37932d5-6627-43c3-9d6b-84866740745c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="EasyBMP">
+      <UniqueIdentifier>{84b69d1a-ba07-42b5-ae4e-4a7c64e1db01}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

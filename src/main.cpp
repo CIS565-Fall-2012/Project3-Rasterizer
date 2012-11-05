@@ -22,12 +22,36 @@ int main(int argc, char** argv){
 	  delete loader;
 	  loadedScene = true;
 	}
+	else if(strcmp(header.c_str(), "texture")==0){
+		BMP texture;
+		texture.ReadFromFile(data.c_str());
+		tMapWidth = texture.TellWidth();
+		tMapHeight = texture.TellHeight();
+		tMapsize = 3 * tMapWidth * tMapHeight;
+		tMap = new float[tMapsize];
+
+		for(int j = 0; j < tMapHeight; j++)
+		{
+			for(int i = 0; i < tMapWidth; i++)
+			{
+				int index = j * tMapWidth + i;
+				tMap[3 * index] = texture(i,j)->Red / 255.0f;
+				tMap[3 * index + 1] = texture(i,j)->Green / 255.0f;
+				tMap[3 * index + 2] = texture(i,j)->Blue / 255.0f;
+			}
+		}
+	}
   }
 
   if(!loadedScene){
 	cout << "Usage: mesh=[obj file]" << endl;
 	return 0;
   }
+
+  if(tMapsize != -1)
+	  cout << "Texture Loaded" << endl;
+  else
+	  cout << "No Textures Loaded" << endl;
 
   frame = 0;
   seconds = time (NULL);
@@ -137,6 +161,9 @@ void runCuda(){
 	mesh->setColor(glm::vec3(1.0, 1.0, 1.0));
 	cbo = mesh->getCBO();
 	cbosize = mesh->getCBOsize();
+
+	tbo = mesh->getTBO();
+	tbosize = mesh->getTBOsize();
 
 	ibo = mesh->getIBO();
 	ibosize = mesh->getIBOsize();

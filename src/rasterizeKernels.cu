@@ -178,7 +178,8 @@ __global__ void primitiveAssemblyKernel(float* vbo, int vbosize, float* nbo, int
 		glm::vec3 Direction = glm::normalize(FaceCenter - CameraPosition);
 		
 		//Check For Back Face Culling
-		if(glm::dot(FaceNormal, Direction) > 0)
+		//0.2f is a epsilon for back face. Creates a V around the normal from cos(90 - Theta) to cos(90 + theta).
+		if(glm::dot(FaceNormal, Direction) > 0.0f + 0.2f)		
 		{
 			primitives[index].isCulled = true;
 			return;

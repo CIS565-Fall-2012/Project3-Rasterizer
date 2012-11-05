@@ -28,6 +28,10 @@
 #include "ObjCore/objloader.h"
 #include "glm/gtc/matrix_transform.hpp"
 #include "camera.h"
+#include "EasyBMP.h"
+#include "EasyBMP_BMP.h"
+#include "EasyBMP_DataStructures.h"
+#include "EasyBMP_VariousBMPutilities.h"
 
 using namespace std;
 
@@ -55,6 +59,14 @@ int* ibo;
 int ibosize;
 float* nbo;
 int nbosize;
+float* tbo;
+int tbosize;
+
+//Texture Map Variables
+float* tMap;
+int tMapsize = -1;
+int tMapWidth;
+int tMapHeight;
 
 //-------------------------------
 //----------CUDA & Camera STUFF-----------
