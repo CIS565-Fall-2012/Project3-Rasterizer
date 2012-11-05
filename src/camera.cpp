@@ -81,7 +81,7 @@ glm::vec4 Camera::getViewport()
 
 glm::mat4 Camera::getViewMatrix()
 {
-	return glm::lookAt(eye, -n, u);
+	return glm::lookAt(eye, -glm::normalize(n) * mRadius, u);
 }
 
 void Camera::setPosition(const glm::vec3& pos)
@@ -131,7 +131,7 @@ void Camera::set(const glm::vec3& eyepos, const glm::vec3& look, const glm::vec3
    n = eyepos - look;
    v = glm::cross(up, n);
    u = glm::cross(n, v);
-   mRadius = n.length(); // cache this distance
+   mRadius = glm::length(n); // cache this distance
 
    u = glm::normalize(u);
    v = glm::normalize(v);
@@ -187,7 +187,8 @@ void Camera::moveRight(int scale) // => move along v
 void Camera::orbitUp(int scale)
 {
    myTurnDir = TU; 
-   mPitch = min(-0.1, mPitch + mTurnRate*scale);
+   //mPitch = min(-0.1, mPitch + mTurnRate*scale);
+   mPitch += mTurnRate * scale;
    orbit(heading(), mPitch);
 }
 
@@ -200,7 +201,8 @@ void Camera::moveUp(int scale) // => move along +u
 void Camera::orbitDown(int scale)
 {
    myTurnDir = TD; 
-   mPitch = max(-M_PI/2.0+0.01, mPitch - mTurnRate*scale);
+   //mPitch = min(M_PI/2.0+0.01, mPitch - mTurnRate*scale);
+   mPitch -= mTurnRate * scale;
    orbit(heading(), mPitch);
 }
 

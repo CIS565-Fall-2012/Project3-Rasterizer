@@ -14,6 +14,7 @@ fragment* depthbuffer;
 float* device_vbo;
 float* device_nbo;
 float* device_cbo;
+float* device_wbo;
 int* device_ibo;
 triangle* primitives;
 
@@ -146,47 +147,55 @@ __global__ void vertexShadeKernel(float* vbo, int vbosize, glm::mat4 modelMatrix
 }
 
 //TODO: Implement primative assembly
-__global__ void primitiveAssemblyKernel(float* vbo, int vbosize, float* nbo, int nbosize, float* cbo, int cbosize, int* ibo, int ibosize, triangle* primitives){
-  int index = (blockIdx.x * blockDim.x) + threadIdx.x;
-  int primitivesCount = ibosize/3;
-  if(index<primitivesCount){
-	  int iboIndex = 3 * index;
-	  //Transformed Vertices
-	  //printf("\n\n------Primitive Assembly-------");
-	  primitives[index].p0 = glm::vec3(vbo[3 * iboIndex], vbo[3 * iboIndex + 1], vbo[3 * iboIndex + 2]);
-	  primitives[index].p1 = glm::vec3(vbo[3 * (iboIndex + 1)], vbo[3 * (iboIndex + 1) + 1], vbo[3 * (iboIndex + 1) + 2]);
-	  primitives[index].p2 = glm::vec3(vbo[3 * (iboIndex + 2)], vbo[3 * (iboIndex + 2) + 1], vbo[3 * (iboIndex + 2) + 2]);
+__global__ void primitiveAssemblyKernel(float* vbo, int vbosize, float* nbo, int nbosize, float* cbo, int cbosize, int* ibo, int ibosize, triangle* primitives, float* wbo){
+	int index = (blockIdx.x * blockDim.x) + threadIdx.x;
+	int primitivesCount = ibosize/3;
+	if(index<primitivesCount){
+		int iboIndex = 3 * index;
+		//printf("\n\n------Primitive Assembly-------");
+		primitives[index].p0 = glm::vec3(vbo[3 * iboIndex], vbo[3 * iboIndex + 1], vbo[3 * iboIndex + 2]);
+		primitives[index].p1 = glm::vec3(vbo[3 * (iboIndex + 1)], vbo[3 * (iboIndex + 1) + 1], vbo[3 * (iboIndex + 1) + 2]);
+		primitives[index].p2 = glm::vec3(vbo[3 * (iboIndex + 2)], vbo[3 * (iboIndex + 2) + 1], vbo[3 * (iboIndex + 2) + 2]);
 
-	  primitives[index].n0 = glm::vec3(nbo[3 * iboIndex], nbo[3 * iboIndex + 1], nbo[3 * iboIndex + 2]);
-	  primitives[index].n1 = glm::vec3(nbo[3 * (iboIndex + 1)], nbo[3 * (iboIndex + 1) + 1], nbo[3 * (iboIndex + 1) + 2]);
-	  primitives[index].n2 = glm::vec3(nbo[3 * (iboIndex + 2)], nbo[3 * (iboIndex + 2) + 1], nbo[3 * (iboIndex + 2) + 2]);
+		primitives[index].n0 = glm::vec3(nbo[3 * iboIndex], nbo[3 * iboIndex + 1], nbo[3 * iboIndex + 2]);
+		primitives[index].n1 = glm::vec3(nbo[3 * (iboIndex + 1)], nbo[3 * (iboIndex + 1) + 1], nbo[3 * (iboIndex + 1) + 2]);
+		primitives[index].n2 = glm::vec3(nbo[3 * (iboIndex + 2)], nbo[3 * (iboIndex + 2) + 1], nbo[3 * (iboIndex + 2) + 2]);
 
-	  //Original Vertices
-	  //primitives[index].orig_p0 = glm::vec3(device_vbo_orig[3 * iboIndex], device_vbo_orig[3 * iboIndex + 1], device_vbo_orig[3 * iboIndex + 2]);
-	  //primitives[index].orig_p1 = glm::vec3(device_vbo_orig[3 * (iboIndex + 1)], device_vbo_orig[3 * (iboIndex + 1) + 1], device_vbo_orig[3 * (iboIndex + 1) + 2]);
-	  //primitives[index].orig_p2 = glm::vec3(device_vbo_orig[3 * (iboIndex + 2)], device_vbo_orig[3 * (iboIndex + 2) + 1], device_vbo_orig[3 * (iboIndex + 2) + 2]);
-	  //Vertex Color
-	  primitives[index].c0 = glm::vec3(cbo[0], cbo[1], cbo[2]);
-	  primitives[index].c1 = glm::vec3(cbo[3], cbo[4], cbo[5]);
-	  primitives[index].c2 = glm::vec3(cbo[6], cbo[7], cbo[8]);
+		primitives[index].w0 = glm::vec3(wbo[3 * iboIndex], wbo[3 * iboIndex + 1], wbo[3 * iboIndex + 2]);
+		primitives[index].w1 = glm::vec3(wbo[3 * (iboIndex + 1)], wbo[3 * (iboIndex + 1) + 1], wbo[3 * (iboIndex + 1) + 2]);
+		primitives[index].w2 = glm::vec3(wbo[3 * (iboIndex + 2)], wbo[3 * (iboIndex + 2) + 1], wbo[3 * (iboIndex + 2) + 2]);
+
+		//Vertex Color
+		if(cbosize == 9)
+		{
+			primitives[index].c0 = glm::vec3(cbo[0], cbo[1], cbo[2]);
+			primitives[index].c1 = glm::vec3(cbo[3], cbo[4], cbo[5]);
+			primitives[index].c2 = glm::vec3(cbo[6], cbo[7], cbo[8]);
+		}
+		else if(cbosize == ibosize * 3)
+		{
+			primitives[index].c0 = glm::vec3(cbo[3 * iboIndex], cbo[3 * iboIndex + 1], cbo[3 * iboIndex + 2]);
+			primitives[index].c1 = glm::vec3(cbo[3 * (iboIndex + 1)], cbo[3 * (iboIndex + 1) + 1], cbo[3 * (iboIndex + 1) + 2]);
+			primitives[index].c2 = glm::vec3(cbo[3 * (iboIndex + 2)], cbo[3 * (iboIndex + 2) + 1], cbo[3 * (iboIndex + 2) + 2]);
+		}
 	  
-	  //Print Vertices
-	  //printf("\nPrimitive %d.A = %f\t%f\t%f", index, primitives[index].p0.x, primitives[index].p0.y, primitives[index].p0.z);
-	  //printf("\nPrimitive %d.B = %f\t%f\t%f", index, primitives[index].p1.x, primitives[index].p1.y, primitives[index].p1.z);
-	  //printf("\nPrimitive %d.C = %f\t%f\t%f", index, primitives[index].p2.x, primitives[index].p2.y, primitives[index].p2.z);
+		//Print Vertices
+		//printf("\nPrimitive %d.A = %f\t%f\t%f", index, primitives[index].p0.x, primitives[index].p0.y, primitives[index].p0.z);
+		//printf("\nPrimitive %d.B = %f\t%f\t%f", index, primitives[index].p1.x, primitives[index].p1.y, primitives[index].p1.z);
+		//printf("\nPrimitive %d.C = %f\t%f\t%f", index, primitives[index].p2.x, primitives[index].p2.y, primitives[index].p2.z);
 
-	  //printf("\nNormal %d.A = %f\t%f\t%f", index, primitives[index].n0.x, primitives[index].n0.y, primitives[index].n0.z);
-	  //printf("\nNormal %d.B = %f\t%f\t%f", index, primitives[index].n1.x, primitives[index].n1.y, primitives[index].n1.z);
-	  //printf("\nNormal %d.C = %f\t%f\t%f", index, primitives[index].n2.x, primitives[index].n2.y, primitives[index].n2.z);
+		//printf("\nNormal %d.A = %f\t%f\t%f", index, primitives[index].n0.x, primitives[index].n0.y, primitives[index].n0.z);
+		//printf("\nNormal %d.B = %f\t%f\t%f", index, primitives[index].n1.x, primitives[index].n1.y, primitives[index].n1.z);
+		//printf("\nNormal %d.C = %f\t%f\t%f", index, primitives[index].n2.x, primitives[index].n2.y, primitives[index].n2.z);
 
-	  //printf("\nPrimitive Color %d.A = %f\t%f\t%f", index, primitives[index].c0.x, primitives[index].c0.y, primitives[index].c0.z);
-	  //printf("\nPrimitive Color %d.B = %f\t%f\t%f", index, primitives[index].c1.x, primitives[index].c1.y, primitives[index].c1.z);
-	  //printf("\nPrimitive Color %d.C = %f\t%f\t%f", index, primitives[index].c2.x, primitives[index].c2.y, primitives[index].c2.z);
-  }
+		//printf("\nPrimitive Color %d.A = %f\t%f\t%f", index, primitives[index].c0.x, primitives[index].c0.y, primitives[index].c0.z);
+		//printf("\nPrimitive Color %d.B = %f\t%f\t%f", index, primitives[index].c1.x, primitives[index].c1.y, primitives[index].c1.z);
+		//printf("\nPrimitive Color %d.C = %f\t%f\t%f", index, primitives[index].c2.x, primitives[index].c2.y, primitives[index].c2.z);
+	}
 }
 
 //TODO: Implement a rasterization method, such as scanline.
-__global__ void rasterizationKernel(triangle* primitives, int primitivesCount, fragment* depthbuffer, glm::vec2 resolution, glm::mat4 modelMatrix, glm::mat4 ViewMatrix,  glm::mat4 Projection, glm::vec4 ViewPort){
+__global__ void rasterizationKernel(triangle* primitives, int primitivesCount, fragment* depthbuffer, glm::vec2 resolution, glm::mat4 modelMatrix, glm::mat4 ViewMatrix,  glm::mat4 Projection, glm::vec4 ViewPort, glm::vec3 CameraPosition){
 	int index = (blockIdx.x * blockDim.x) + threadIdx.x;
 	if(index<primitivesCount){
 		//printf("\n\n------Rasterization-------");
@@ -194,24 +203,19 @@ __global__ void rasterizationKernel(triangle* primitives, int primitivesCount, f
 		glm::vec3 maxPoint(0.0, 0.0, 0.0);
 		getAABBForTriangle(primitives[index], minPoint, maxPoint);
 		
-		//Calculate the Original Points -> Even before tansformations are applied
-		glm::vec3 OPoint0 = glm::unProject(primitives[index].p0, ViewMatrix * modelMatrix, Projection, ViewPort);		//Point in world space
-		glm::vec3 OPoint1 = glm::unProject(primitives[index].p1, ViewMatrix * modelMatrix, Projection, ViewPort);		//Point in world space
-		glm::vec3 OPoint2 = glm::unProject(primitives[index].p2, ViewMatrix * modelMatrix, Projection, ViewPort);		//Point in world space
-
 		//Calculate Points after Model View Transformation
-		glm::vec3 MPoint0 = glm::vec3(modelMatrix * glm::vec4(OPoint0, 1.0));		//Point in world space
-		glm::vec3 MPoint1 = glm::vec3(modelMatrix * glm::vec4(OPoint1, 1.0));			//Point in world space
-		glm::vec3 MPoint2 = glm::vec3(modelMatrix * glm::vec4(OPoint2, 1.0));		
+		glm::vec3 WPoint0 = glm::vec3(modelMatrix * glm::vec4(primitives[index].w0, 1.0f));		//Point in world space
+		glm::vec3 WPoint1 = glm::vec3(modelMatrix * glm::vec4(primitives[index].w1, 1.0f));			//Point in world space
+		glm::vec3 WPoint2 = glm::vec3(modelMatrix * glm::vec4(primitives[index].w2, 1.0f));		
+
+		//Calculate the Original Points -> Even before tansformations are applied
+		//glm::vec3 OPoint0 = glm::unProject(primitives[index].p0, ViewMatrix * modelMatrix, Projection, ViewPort);		//Point in world space
+		//glm::vec3 OPoint1 = glm::unProject(primitives[index].p1, ViewMatrix * modelMatrix, Projection, ViewPort);		//Point in world space
+		//glm::vec3 OPoint2 = glm::unProject(primitives[index].p2, ViewMatrix * modelMatrix, Projection, ViewPort);		//Point in world space
 
 		//printf("\nNormal Before %d.A = %f\t%f\t%f", index, primitives[index].n0.x, primitives[index].n0.y, primitives[index].n0.z);
 		//printf("\nNormal Before %d.B = %f\t%f\t%f", index, primitives[index].n1.x, primitives[index].n1.y, primitives[index].n1.z);
 		//printf("\nNormal Before %d.C = %f\t%f\t%f", index, primitives[index].n2.x, primitives[index].n2.y, primitives[index].n2.z);
-
-		//Calculate the ModelView Normals
-		glm::vec3 NPoint0 = glm::normalize(glm::vec3((ViewMatrix * modelMatrix) * glm::vec4(primitives[index].n0, 0.0)));		//Point in world space
-		glm::vec3 NPoint1 = glm::normalize(glm::vec3((ViewMatrix * modelMatrix)* glm::vec4(primitives[index].n1, 0.0)));			//Point in world space
-		glm::vec3 NPoint2 = glm::normalize(glm::vec3((ViewMatrix * modelMatrix)* glm::vec4(primitives[index].n2, 0.0)));			//Point in world space
 
 		//printf("\nNormal After %d.A = %f\t%f\t%f", index, NPoint0.x, NPoint0.y, NPoint0.z);
 		//printf("\nNormal After %d.B = %f\t%f\t%f", index, NPoint1.x, NPoint1.y, NPoint1.z);
@@ -219,14 +223,25 @@ __global__ void rasterizationKernel(triangle* primitives, int primitivesCount, f
 
 		//printf("\nMaxPoint %d = %f\t%f\t%f", index, maxPoint.x, maxPoint.y, maxPoint.z);
 		//printf("\nMinPoint %d = %f\t%f\t%f", index, minPoint.x, minPoint.y, minPoint.z);
+
+		//Calculate the ModelView Normals
+
+		//Normals in world space
+		glm::vec3 NPoint0 = glm::normalize(glm::vec3(modelMatrix * glm::vec4(primitives[index].n0, 0.0)));		
+		glm::vec3 NPoint1 = glm::normalize(glm::vec3(modelMatrix* glm::vec4(primitives[index].n1, 0.0)));			
+		glm::vec3 NPoint2 = glm::normalize(glm::vec3(modelMatrix* glm::vec4(primitives[index].n2, 0.0)));
+		//Above-> Normals in World Space
+
+
 		glm::vec3 CPoints[4] = {primitives[index].p0, primitives[index].p1, primitives[index].p2, primitives[index].p0};
+		
 		for(int j = minPoint.y; j <= maxPoint.y; j++)
 		{
 			glm::vec3 FirstPoint = glm::vec3(10000, j, 0);	//Setting it inverted because we need space of scanline area covered
 			glm::vec3 LastPoint = glm::vec3(-10000, j, 0);
-		
+			bool inter = true;
 			float t = -1.0f;
-			for(int k = 0; k < 3; k++)
+			for(int k = 0; k < 3 && inter; k++)
 			{
 				glm::vec3 StartPoint;
 				glm::vec3 EndPoint;
@@ -239,24 +254,41 @@ __global__ void rasterizationKernel(triangle* primitives, int primitivesCount, f
 				if(LineLength > 0.001)
 					LineUnit = glm::normalize(EndPoint - StartPoint);
 				t = -1.0f;
-				
-				t = (j - StartPoint.y) / LineUnit.y;
-				glm::vec3 IntersectionPoint;
-					
-				if(t >=0 && t <= LineLength)
+
+				//If the following condition is true, then we cannot divide by LineUnit.y in the else part ->Divide by 0 error
+				if(LineUnit.y < 0 + 0.0000001 && LineUnit.y > 0 - 0.0000001)
 				{
-					IntersectionPoint = StartPoint + LineUnit * t;
-					if(IntersectionPoint.x < FirstPoint.x)
-						FirstPoint = IntersectionPoint;
-					if(IntersectionPoint.x > LastPoint.x)
-							LastPoint = IntersectionPoint;
+					if(StartPoint.x < EndPoint.x)
+					{
+						FirstPoint = StartPoint;
+						LastPoint = EndPoint;
+					}
+					else
+					{
+						FirstPoint = EndPoint;
+						LastPoint = StartPoint;
+					}
+					inter = false;
+				}
+				else
+				{
+					t = (j - StartPoint.y) / LineUnit.y;
+					glm::vec3 IntersectionPoint;
+					
+					if(t >=0 && t <= LineLength)
+					{
+						IntersectionPoint = StartPoint + LineUnit * t;
+						if(IntersectionPoint.x < FirstPoint.x)
+							FirstPoint = IntersectionPoint;
+						if(IntersectionPoint.x > LastPoint.x)
+								LastPoint = IntersectionPoint;
+					}
 				}
 			}
 			//printf("\nFirstPoint %d = %f\t%f\t%f", index, FirstPoint.x, FirstPoint.y, FirstPoint.z);
 			//printf("\nLastPoint %d = %f\t%f\t%f", index, LastPoint.x, LastPoint.y, LastPoint.z);
-			if(t > 0 && FirstPoint.x < resolution.x && LastPoint.x > 0)
+			if(FirstPoint.x < resolution.x && LastPoint.x > 0)
 			{
-				//printf("\n%d\t%d", index, 20);
 				if(FirstPoint.x > LastPoint.x)		//Check if first point is greater than the last point
 				{
 					glm::vec3 temp = LastPoint;
@@ -264,24 +296,21 @@ __global__ void rasterizationKernel(triangle* primitives, int primitivesCount, f
 					FirstPoint = temp;
 				}
 				
-				//printf("\nFirst Point %d = %f\t%f\t%f", index, FirstPoint.x, FirstPoint.y, FirstPoint.z);
-				//printf("\nLast Point %d = %f\t%f\t%f", index, LastPoint.x, LastPoint.y, LastPoint.z);
-			
 				float ScanlineLength = glm::length(LastPoint - FirstPoint);
-				glm::vec3 ScanlineUnit(0.0);
-				if(ScanlineLength > 0.001)
+				glm::vec3 ScanlineUnit(0.0, 0.0, 0.0);
+				if(ScanlineLength > 0.001f)
 					ScanlineUnit = glm::normalize(LastPoint - FirstPoint);
 			
 				float t = 0;
-				int ypix = resolution.y - j;
-				for(int i = 0; i < ScanlineLength; i++)
+				
+				for(int i = 0; i <= ScanlineLength; i++)
 				{
 					glm::vec3 SPoint = FirstPoint + (float)i * ScanlineUnit;
-					int xpix = resolution.x - SPoint.x;//Point in screen space 0,0,800,800
-					glm::vec3 WPoint = glm::unProject(SPoint, ViewMatrix * modelMatrix, Projection, ViewPort);		//Point in world space
-					glm::vec3 BPoint = calculateBarycentricCoordinate(primitives[index], glm::vec2(SPoint.x, SPoint.y));
 					
-					//printf("\nWorld Point %d = %f\t%f\t%f", index, WPoint.x, WPoint.y, WPoint.z);
+					int xpix = resolution.x - SPoint.x;//Point in screen space 0,0,800,800
+					int ypix = resolution.y - SPoint.y;
+					//glm::vec3 WPoint = glm::unProject(SPoint, ViewMatrix * modelMatrix, Projection, ViewPort);		//Point in world space
+					glm::vec3 BPoint = calculateBarycentricCoordinate(primitives[index], glm::vec2(SPoint.x, SPoint.y));
 					//printf("\nBarycentric Point %d = %f\t%f\t%f", index, BPoint.x, BPoint.y, BPoint.z);
 			
 					int bufIndex = ypix * resolution.x + xpix;
@@ -289,16 +318,21 @@ __global__ void rasterizationKernel(triangle* primitives, int primitivesCount, f
 					fragment fragXY;
 					fragXY.color = BPoint.x * primitives[index].c0 + BPoint.y * primitives[index].c1 + BPoint.z * primitives[index].c2;
 					fragXY.normal = glm::normalize(BPoint.x * NPoint0 + BPoint.y * NPoint1 + BPoint.z * NPoint2);
-					fragXY.orig_position = glm::vec3((ViewMatrix * modelMatrix) * glm::vec4(WPoint, 1.0));
+					//fragXY.orig_position = glm::vec3(modelMatrix * glm::vec4(WPoint, 1.0));
+					
+					fragXY.orig_position = BPoint.x * WPoint0 + BPoint.y * WPoint1 + BPoint.z * WPoint2;
+
 					fragXY.position = SPoint;
 					fragXY.Lock = 1;
-					//printf("\Fragment Color %d    %d = %f\t%f\t%f", xpix, ypix, fragXY.color.x, fragXY.color.y, fragXY.color.z);
-					
+										
 					//Atomic Compare and swap
 					bool dontLeaveLoop = true;
+					float FragDistanceFromEye = glm::length(fragXY.orig_position - CameraPosition);
+									
 					while(dontLeaveLoop)
 					{
-						if(depthbuffer[bufIndex].orig_position.z < fragXY.orig_position.z)
+						float BufferDistanceFromEye = glm::length(depthbuffer[bufIndex].orig_position - CameraPosition);
+						if(FragDistanceFromEye < BufferDistanceFromEye)
 						{	
 							if(atomicExch(&(depthbuffer[bufIndex].Lock), 1) == 0)
 							{
@@ -319,7 +353,7 @@ __global__ void rasterizationKernel(triangle* primitives, int primitivesCount, f
 }
 
 //TODO: Implement a fragment shader
-__global__ void fragmentShadeKernel(fragment* depthbuffer, glm::vec2 resolution, glm::vec3 Camera, glm::vec3 LightPosition, glm::vec3 LightColor, glm::vec3 AmbientColor, float specularCoefficient){
+__global__ void fragmentShadeKernel(fragment* depthbuffer, glm::vec2 resolution, glm::vec3 Camera, glm::vec3 LightPosition, glm::vec3 LightColor, glm::vec3 AmbientColor, float specularCoefficient, bool UseDiffuseShade, bool UseSpecularShade, bool UseAmbientShade){
 	int x = (blockIdx.x * blockDim.x) + threadIdx.x;
 	int y = (blockIdx.y * blockDim.y) + threadIdx.y;
 	int index = x + (y * resolution.x);
@@ -341,10 +375,14 @@ __global__ void fragmentShadeKernel(fragment* depthbuffer, glm::vec2 resolution,
 			if(diffuseTerm == 0)
 				specularTerm = 0;
 			
-			glm::vec3 out_Color = depthbuffer[index].color;
-			out_Color = out_Color * LightColor * diffuseTerm 
-						+ out_Color * AmbientColor
-						+ out_Color * LightColor * pow(specularTerm, specularCoefficient);
+			glm::vec3 out_Color = glm::vec3(0.0);
+			glm::vec3 Color = depthbuffer[index].color;
+			if(UseDiffuseShade)
+				out_Color += Color * LightColor * diffuseTerm;
+			if(UseAmbientShade)
+				out_Color += Color * AmbientColor;
+			if(UseSpecularShade)
+				out_Color += Color * LightColor * pow(specularTerm, specularCoefficient);
 			
 			glm::clamp(out_Color, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f));
 			depthbuffer[index].color = out_Color;
@@ -419,6 +457,10 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float*
 	cudaMalloc((void**)&device_vbo, vbosize*sizeof(float));
 	cudaMemcpy( device_vbo, vbo, vbosize*sizeof(float), cudaMemcpyHostToDevice);
 
+	device_wbo = NULL;
+	cudaMalloc((void**)&device_wbo, vbosize*sizeof(float));
+	cudaMemcpy( device_wbo, vbo, vbosize*sizeof(float), cudaMemcpyHostToDevice);
+
 	device_nbo = NULL;
 	cudaMalloc((void**)&device_nbo, nbosize*sizeof(float));
 	cudaMemcpy( device_nbo, nbo, nbosize*sizeof(float), cudaMemcpyHostToDevice);
@@ -440,21 +482,24 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float*
 	//primitive assembly
 	//------------------------------
 	primitiveBlocks = ceil(((float)ibosize/3)/((float)tileSize));
-	primitiveAssemblyKernel<<<primitiveBlocks, tileSize>>>(device_vbo, vbosize, device_nbo, nbosize, device_cbo, cbosize, device_ibo, ibosize, primitives);
+	primitiveAssemblyKernel<<<primitiveBlocks, tileSize>>>(device_vbo, vbosize, device_nbo, nbosize, device_cbo, cbosize, device_ibo, ibosize, primitives, device_wbo);
 	
 	cudaDeviceSynchronize();
 	//------------------------------
 	//rasterization
 	//------------------------------
-	rasterizationKernel<<<primitiveBlocks, tileSize>>>(primitives, ibosize/3, depthbuffer, resolution, modelMatrix, ViewMatrix, Projection, ViewPort);
+	rasterizationKernel<<<primitiveBlocks, tileSize>>>(primitives, ibosize/3, depthbuffer, resolution, modelMatrix, ViewMatrix, Projection, ViewPort, CameraPosition);
 	
 	cudaDeviceSynchronize();
 	//------------------------------
 	//fragment shader
 	//------------------------------
-	fragmentShadeKernel<<<fullBlocksPerGrid, threadsPerBlock>>>(depthbuffer, resolution, CameraPosition, LightPosition, LightColor, AmbientColor, specularCoefficient);
+	if(UseFragmentShader)
+	{
+		fragmentShadeKernel<<<fullBlocksPerGrid, threadsPerBlock>>>(depthbuffer, resolution, CameraPosition, LightPosition, LightColor, AmbientColor, specularCoefficient, UseDiffuseShade, UseSpecularShade, UseAmbientShade);
 
-	cudaDeviceSynchronize();
+		cudaDeviceSynchronize();
+	}
 	//------------------------------
 	//write fragments to framebuffer
 	//------------------------------
@@ -471,6 +516,7 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float*
 void kernelCleanup(){
   cudaFree( primitives );
   cudaFree( device_vbo );
+  cudaFree( device_wbo );
   cudaFree( device_nbo );
   cudaFree( device_cbo );
   cudaFree( device_ibo );

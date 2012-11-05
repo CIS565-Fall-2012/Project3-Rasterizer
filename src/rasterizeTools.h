@@ -10,15 +10,22 @@
 #include "cudaMat4.h"
 
 struct triangle {
-  glm::vec3 p0;
-  glm::vec3 p1;
-  glm::vec3 p2;
-  glm::vec3 c0;
-  glm::vec3 c1;
-  glm::vec3 c2;
-  glm::vec3 n0;
-  glm::vec3 n1;
-  glm::vec3 n2;
+	//Vertices in Screen Space
+	glm::vec3 p0;
+	glm::vec3 p1;
+	glm::vec3 p2;
+	//Color
+	glm::vec3 c0;
+	glm::vec3 c1;
+	glm::vec3 c2;
+	//Normal in World Space
+	glm::vec3 n0;
+	glm::vec3 n1;
+	glm::vec3 n2;
+	//Vertices in World Space
+	glm::vec3 w0;
+	glm::vec3 w1;
+	glm::vec3 w2;
 };
 
 struct fragment{

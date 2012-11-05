@@ -61,7 +61,12 @@ int nbosize;
 //-------------------------------
 
 int width=800; int height=800;
+//int width=1280; int height=720;
 
+bool UseFragmentShader = true;
+bool UseDiffuseShade = true;
+bool UseSpecularShade = true;
+bool UseAmbientShade = true;
 //////////////////////////////Specify Mesh Model Matrix Values Here///////////////////////////////////
 glm::vec3 mTranslate = glm::vec3(0.0, 0.0, 0.0);
 glm::vec3 mRotate = glm::vec3(0.0, 0.0, 0.0);
@@ -79,7 +84,7 @@ glm::vec4 ViewPort;
 
 
 //////////////////////////////Specify Light Values Here///////////////////////////////////
-glm::vec3 LightPosition = glm::vec3(10.0, 2.0, 0.0);
+glm::vec3 LightPosition = glm::vec3(10.0, 5.0, 2.0);
 glm::vec3 LightColor	= glm::vec3(1.0, 1.0, 1.0);
 glm::vec3 AmbientColor	= glm::vec3(0.1, 0.1, 0.1);
 float specularCoefficient = 20.0f;
@@ -89,7 +94,7 @@ glm::vec3  Camera::dfltEye(0.0, 7.5, 15.0);
 glm::vec3  Camera::dfltUp(0.0, 1.0, 0.0);
 glm::vec3  Camera::dfltLook(0.0, 0.0, 0.0);
 float Camera::dfltVfov = 30.0;
-float Camera::dfltAspect = width / height;
+float Camera::dfltAspect = width / (float)height;
 float Camera::dfltNear = 0.1;
 float Camera::dfltFar = 100.0;
 float Camera::dfltSpeed = 0.1;

@@ -90,11 +90,11 @@ void initCamera()
 	//-------------------------------
 	//Initialize Camera Values here
 	//-------------------------------
-	theCamera.dfltEye = glm::vec3(0.0, 3, 15.0);
+	theCamera.dfltEye = glm::vec3(0.0, 10, 24.0);
 	theCamera.dfltUp = glm::vec3(0.0, 1.0, 0.0);
-	theCamera.dfltLook = glm::vec3(0.0, 0.5, 0.0);
+	theCamera.dfltLook = glm::vec3(0.0, 0.0, 0.0);
 	theCamera.dfltVfov = 30.0;
-	theCamera.dfltAspect = width / height;
+	theCamera.dfltAspect = width / (float)height;
 	theCamera.dfltNear = 0.1;
 	theCamera.dfltFar = 100.0;
 	theCamera.dfltSpeed = 0.1;
@@ -126,12 +126,17 @@ void runCuda(){
 
 	nbo = mesh->getNBO();
 	nbosize = mesh->getNBOsize();
-
+	/*
 	float newcbo[] = {1.0, 1.0, 1.0, 
 					1.0, 1.0, 1.0, 
 					1.0, 1.0, 1.0};
 	cbo = newcbo;
 	cbosize = 9;
+	*/
+
+	mesh->setColor(glm::vec3(1.0, 1.0, 1.0));
+	cbo = mesh->getCBO();
+	cbosize = mesh->getCBOsize();
 
 	ibo = mesh->getIBO();
 	ibosize = mesh->getIBOsize();
@@ -222,11 +227,15 @@ void keyboard(unsigned char key, int x, int y)
 		case(27):
 			shut_down(1);    
 			break;
-
+//Reset Model View to Identity		
+		case 'r':
+			modelMatrix = glm::mat4(1.0);
+			break;
+//Rotations		
 		case 'y':
 			modelMatrix = glm::rotate(modelMatrix, 5.0f, glm::vec3(0.0f, 1.0f, 0.0f));
 			break;
-//Rotations
+
 		case 'Y':
 			modelMatrix = glm::rotate(modelMatrix, -5.0f, glm::vec3(0.0f, 1.0f, 0.0f));
 			break;
@@ -293,7 +302,23 @@ void keyboard(unsigned char key, int x, int y)
 		
 		case 'L':
 			modelMatrix = glm::scale(modelMatrix, glm::vec3(1.0, 1.0, 0.5));
-			break;	
+			break;
+
+		case '1':
+			UseFragmentShader = !UseFragmentShader;
+			break;
+
+		case'2':
+			UseDiffuseShade = !UseDiffuseShade;
+			break;
+
+		case'3':
+			UseSpecularShade = !UseSpecularShade;
+			break;
+
+		case'4':
+			UseAmbientShade = !UseAmbientShade;
+			break;
 	}
 }
 
