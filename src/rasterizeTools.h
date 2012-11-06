@@ -4,12 +4,20 @@
 #ifndef RASTERIZETOOLS_H
 #define RASTERIZETOOLS_H
 
+#define DEPTHBUFFERSIZE 31
+#define DEPTHPRECISION 1e7
+#define zNear 0.8
+#define zFar 5.0
+
 #include <cmath>
 #include "glm/glm.hpp"
 #include "utilities.h"
 #include "cudaMat4.h"
 
 struct triangle {
+  glm::vec3 pe0;
+  glm::vec3 pe1;
+  glm::vec3 pe2;
   glm::vec3 p0;
   glm::vec3 p1;
   glm::vec3 p2;
@@ -22,17 +30,29 @@ struct fragment{
   glm::vec3 color;
   glm::vec3 normal;
   glm::vec3 position;
+  int depth;
 };
 
 //Multiplies a cudaMat4 matrix and a vec4
+__host__ __device__ glm::vec4 multiplyMV4(cudaMat4 m, glm::vec4 v){
+  glm::vec4 r(0,0,0,0);
+  r.x = (m.x.x*v.x)+(m.x.y*v.y)+(m.x.z*v.z)+(m.x.w*v.w);
+  r.y = (m.y.x*v.x)+(m.y.y*v.y)+(m.y.z*v.z)+(m.y.w*v.w);
+  r.z = (m.z.x*v.x)+(m.z.y*v.y)+(m.z.z*v.z)+(m.z.w*v.w);
+  r.w =(m.w.x*v.x)+(m.w.y*v.y)+(m.w.z*v.z)+(m.w.w*v.w);
+  return r;
+}
+
 __host__ __device__ glm::vec3 multiplyMV(cudaMat4 m, glm::vec4 v){
   glm::vec3 r(1,1,1);
   r.x = (m.x.x*v.x)+(m.x.y*v.y)+(m.x.z*v.z)+(m.x.w*v.w);
   r.y = (m.y.x*v.x)+(m.y.y*v.y)+(m.y.z*v.z)+(m.y.w*v.w);
   r.z = (m.z.x*v.x)+(m.z.y*v.y)+(m.z.z*v.z)+(m.z.w*v.w);
+  //float w=(m.w.x*v.x)+(m.w.y*v.y)+(m.w.z*v.z)+(m.w.w*v.w);
+  //if(w!=0.0f)
+	 //r/=w;
   return r;
 }
-
 //LOOK: finds the axis aligned bounding box for a given triangle
 __host__ __device__ void getAABBForTriangle(triangle tri, glm::vec3& minpoint, glm::vec3& maxpoint){
   minpoint = glm::vec3(min(min(tri.p0.x, tri.p1.x),tri.p2.x), 
@@ -72,7 +92,33 @@ __host__ __device__ bool isBarycentricCoordInBounds(glm::vec3 barycentricCoord){
 
 //LOOK: for a given barycentric coordinate, return the corresponding z position on the triangle
 __host__ __device__ float getZAtCoordinate(glm::vec3 barycentricCoord, triangle tri){
-  return -(barycentricCoord.x*tri.p0.z + barycentricCoord.y*tri.p1.z + barycentricCoord.z*tri.p2.z);
+  return (barycentricCoord.x*tri.pe0.z + barycentricCoord.y*tri.pe1.z + barycentricCoord.z*tri.pe2.z);
 }
 
+__host__ __device__ int calculateDepth(glm::vec3 barycentricCoord, triangle tri){
+	return (int)((pow(2.0,DEPTHBUFFERSIZE)-1.0)*(zFar*zNear/(zFar-zNear)/getZAtCoordinate(barycentricCoord,tri))+0.5*(pow(2.0,DEPTHBUFFERSIZE)-1.0)*(zFar+zNear)/(zFar-zNear)+0.5);
+}
+
+__host__ __device__ glm::vec3  getColorAtCoordinate(glm::vec3 barycentricCoord, triangle tri){
+	return (barycentricCoord.x*tri.c0 + barycentricCoord.y*tri.c1 + barycentricCoord.z*tri.c2);
+}
+
+__host__ __device__ glm::vec3  getPosInEyeSpaceAtCoordinate(glm::vec3 barycentricCoord, triangle tri){
+	return (barycentricCoord.x*tri.pe0 + barycentricCoord.y*tri.pe1 + barycentricCoord.z*tri.pe2);
+}
+__host__ __device__ glm::vec3 getNormalInEyeSpace(triangle tri){
+  
+	glm::vec3 edge1=tri.pe1-tri.pe0;
+	glm::vec3 edge2=tri.pe2-tri.pe0;
+	glm::vec3 normal=glm::normalize(glm::cross(edge1,edge2));
+	return normal;
+}
+
+__host__ __device__ glm::vec3 getNormal(triangle tri){
+  
+	glm::vec3 edge1=tri.p1-tri.p0;
+	glm::vec3 edge2=tri.p2-tri.p0;
+	glm::vec3 normal=glm::normalize(glm::cross(edge1,edge2));
+	return normal;
+}
 #endif
