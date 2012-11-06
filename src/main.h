@@ -72,8 +72,8 @@ int tMapHeight = 0;
 //----------CUDA & Camera STUFF-----------
 //-------------------------------
 
-int width=800; int height=800;
-//int width=1280; int height=720;
+//int width=800; int height=800;
+int width=1280; int height=720;
 
 bool UseFragmentShader = true;
 bool UseDiffuseShade = true;
@@ -86,6 +86,7 @@ glm::vec3 mTranslate = glm::vec3(0.0, 0.0, 0.0);
 glm::vec3 mRotate = glm::vec3(0.0, 0.0, 0.0);
 glm::vec3 mScale = glm::vec3(1.0, 1.0, 1.0);
 glm::mat4 modelMatrix = utilityCore::buildTransformationMatrix(mTranslate, mRotate, mScale);
+glm::vec3 Obj_Color = glm::vec3(1.0, 1.0, 1.0);
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -98,7 +99,7 @@ glm::vec4 ViewPort;
 
 
 //////////////////////////////Specify Light Values Here///////////////////////////////////
-glm::vec3 LightPosition = glm::vec3(10.0, 5.0, 2.0);
+glm::vec3 LightPosition = glm::vec3(5.0, 10.0, 5.0);
 glm::vec3 LightColor	= glm::vec3(1.0, 1.0, 1.0);
 glm::vec3 AmbientColor	= glm::vec3(0.1, 0.1, 0.1);
 float specularCoefficient = 20.0f;

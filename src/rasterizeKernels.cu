@@ -149,7 +149,7 @@ __global__ void vertexShadeKernel(float* vbo, int vbosize, glm::mat4 modelMatrix
 }
 
 //TODO: Implement primative assembly
-__global__ void primitiveAssemblyKernel(float* vbo, int vbosize, float* nbo, int nbosize, float* cbo, int cbosize, int* ibo, int ibosize, float* tbo, int tbosize, float* tMap, int tMapsize, int tMapWidth, int tMapHeight, triangle* primitives, float* wbo, glm::mat4 modelMatrix, glm::vec3 CameraPosition){
+__global__ void primitiveAssemblyKernel(float* vbo, int vbosize, float* nbo, int nbosize, float* cbo, int cbosize, int* ibo, int ibosize, float* tbo, int tbosize, int tMapsize, triangle* primitives, float* wbo, glm::mat4 modelMatrix, glm::vec3 CameraPosition){
 	int index = (blockIdx.x * blockDim.x) + threadIdx.x;
 	int primitivesCount = ibosize/3;
 	if(index<primitivesCount){
@@ -377,13 +377,38 @@ __global__ void rasterizationKernel(triangle* primitives, int primitivesCount, f
 						}
 						else
 						{
-							fragXY.color.x = tMap[3 * (YCoord * tMapWidth + XCoord)];
-							fragXY.color.y = tMap[3 * (YCoord * tMapWidth + XCoord) + 1];
-							fragXY.color.z = tMap[3 * (YCoord * tMapWidth + XCoord) + 2];
+							//Check If UV maps to Image Space
+							if(YCoord > 1 && YCoord < tMapHeight - 1  && XCoord > 1 && XCoord < tMapWidth - 1)
+							{
+								fragXY.color.x = 0;
+								fragXY.color.y = 0;
+								fragXY.color.z = 0;
+								//Texel Based Anti-Aliasing
+								for(int d = YCoord - 1; d <= YCoord + 1; d++)
+								{
+									for(int e = XCoord - 1; e <= XCoord + 1; e++)
+									{
+										fragXY.color.x += tMap[3 * (d * tMapWidth + e)];
+										fragXY.color.y += tMap[3 * (d * tMapWidth + e) + 1];
+										fragXY.color.z += tMap[3 * (d * tMapWidth + e) + 2];
+									}
+								}
+
+								fragXY.color = fragXY.color / 9.0f;
+							}
+							else
+							{
+								//If on the corner of the Texturem then don't anti-alias
+								fragXY.color.x = tMap[3 * (YCoord * tMapWidth + XCoord)];
+								fragXY.color.y = tMap[3 * (YCoord * tMapWidth + XCoord) + 1];
+								fragXY.color.z = tMap[3 * (YCoord * tMapWidth + XCoord) + 2];
+
+							}
 						}
 					}
 					else
 					{
+						//If No Texture Mapping Find the Color using Barycentric Coords
 						fragXY.color = BPoint.x * primitives[index].c0 + BPoint.y * primitives[index].c1 + BPoint.z * primitives[index].c2;
 					}
 					fragXY.normal = glm::normalize(BPoint.x * NPoint0 + BPoint.y * NPoint1 + BPoint.z * NPoint2);
@@ -569,7 +594,7 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float*
 	//primitive assembly
 	//------------------------------
 	primitiveBlocks = ceil(((float)ibosize/3)/((float)tileSize));
-	primitiveAssemblyKernel<<<primitiveBlocks, tileSize>>>(device_vbo, vbosize, device_nbo, nbosize, device_cbo, cbosize, device_ibo, ibosize, device_tbo, tbosize, device_tMap, tMapsize, tMapWidth, tMapHeight, primitives, device_wbo, modelMatrix, CameraPosition);
+	primitiveAssemblyKernel<<<primitiveBlocks, tileSize>>>(device_vbo, vbosize, device_nbo, nbosize, device_cbo, cbosize, device_ibo, ibosize, device_tbo, tbosize, tMapsize, primitives, device_wbo, modelMatrix, CameraPosition);
 	
 	cudaDeviceSynchronize();
 	//------------------------------
