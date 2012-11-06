@@ -133,7 +133,7 @@ __global__ void sendImageToPBO(uchar4* PBOpos, glm::vec2 resolution, glm::vec3* 
 }
 
 //TODO: Implement a vertex shader
-__global__ void vertexShadeKernel(float* vbo, int vbosize, vertex* vboFull, cudaMat4 mM, glm::vec3 lpos){
+__global__ void vertexShadeKernel(float* vbo, int vbosize, vertex* vboFull, cudaMat4 mM, cudaMat4 hM, glm::vec3 lpos){
 	int index = (blockIdx.x * blockDim.x) + threadIdx.x;
 	if(index<vbosize/3)
 	{
@@ -141,15 +141,25 @@ __global__ void vertexShadeKernel(float* vbo, int vbosize, vertex* vboFull, cuda
 		int idxY = idxX + 1;
 		int idxZ = idxX + 2;
 
-		glm::vec4 v( vbo[idxX], vbo[idxY], vbo[idxZ], 1.0f );
+		float hinge = vbo[idxX] + vbo[idxY];
 
+		glm::vec4 v( vbo[idxX], vbo[idxY], vbo[idxZ], 1.0f );
+		glm::vec4 u = multiplyMV4( hM, v );
 		v = multiplyMV4( mM, v );
 		
-		glm::vec4 u = v;
 
-		if( v.x > 0.2 )
+		if( hinge > 0.50 )
 		{
-			u = multiplyMV4( mM, v );
+			u = multiplyMV4( mM, u );
+			if( hinge < 0.75 )
+			{
+				float w = ( hinge-0.50 ) / 0.25;
+				v = v*(1-w) + u*w;
+			}
+			else
+			{
+				v = u;
+			}
 		}
 
 		vboFull[index].lightdir = ( glm::vec4( lpos, 1 ) - v ).swizzle(glm::X, glm::Y, glm::Z);
@@ -172,6 +182,10 @@ __global__ void primitiveAssemblyKernel(vertex* vbo, int vbosize, float* cbo, in
 	  int idxX = ibo[idx0]*3;
 	  int idxY = idxX + 1;
 	  int idxZ = idxX + 2;
+
+	  int idxCx = ( ibo[idx0] % (cbosize/3) ) * 3;
+	  int idxCy = idxCx + 1;
+	  int idxCz = idxCx + 2;
 	  
 	  glm::vec4 pos = glm::vec4( vbo[ibo[idx0]].position, 1.0f );
 	  
@@ -180,12 +194,16 @@ __global__ void primitiveAssemblyKernel(vertex* vbo, int vbosize, float* cbo, in
 	  pos = multiplyMV4( sM, pos );
 
 	  primitives[ index ].v0.position = (pos/pos.w).swizzle(glm::X,glm::Y,glm::Z);
-	  primitives[ index ].v0.color = glm::vec3( cbo[(idxX+frame)%cbosize], cbo[(idxY+frame)%cbosize], cbo[(idxZ+frame)%cbosize] );
+	  primitives[ index ].v0.color = glm::vec3( cbo[idxCx], cbo[idxCy], cbo[idxCz] );
 	  primitives[ index ].v0.lightdir = vbo[ibo[idx0]].lightdir;
 
 	  idxX = ibo[idx1]*3;
 	  idxY = idxX + 1;
 	  idxZ = idxX + 2;
+
+	  idxCx = ( ibo[idx1] % (cbosize/3) ) * 3;
+	  idxCy = idxCx + 1;
+	  idxCz = idxCx + 2;
 
 	  pos = glm::vec4( vbo[ibo[idx1]].position, 1.0f );
 	  
@@ -194,12 +212,16 @@ __global__ void primitiveAssemblyKernel(vertex* vbo, int vbosize, float* cbo, in
 	  pos = multiplyMV4( sM, pos );
 
 	  primitives[ index ].v1.position = (pos/pos.w).swizzle(glm::X,glm::Y,glm::Z);
-	  primitives[ index ].v1.color = glm::vec3( cbo[(idxX+frame)%cbosize], cbo[(idxY+frame)%cbosize], cbo[(idxZ+frame)%cbosize] );
+	  primitives[ index ].v1.color = glm::vec3( cbo[idxCx], cbo[idxCy], cbo[idxCz] );
 	  primitives[ index ].v1.lightdir = vbo[ibo[idx1]].lightdir;
 
 	  idxX = ibo[idx2]*3;
 	  idxY = idxX + 1;
 	  idxZ = idxX + 2;
+
+	  idxCx = ( ibo[idx2] % (cbosize/3) ) * 3;
+	  idxCy = idxCx + 1;
+	  idxCz = idxCx + 2;
 
 	  pos = glm::vec4( vbo[ibo[idx2]].position, 1.0f );
 	  
@@ -208,7 +230,7 @@ __global__ void primitiveAssemblyKernel(vertex* vbo, int vbosize, float* cbo, in
 	  pos = multiplyMV4( sM, pos );
 
 	  primitives[ index ].v2.position = (pos/pos.w).swizzle(glm::X,glm::Y,glm::Z);
-	  primitives[ index ].v2.color = glm::vec3( cbo[(idxX+frame)%cbosize], cbo[(idxY+frame)%cbosize], cbo[(idxZ+frame)%cbosize] );
+	  primitives[ index ].v2.color = glm::vec3( cbo[idxCx], cbo[idxCy], cbo[idxCz] );
 	  primitives[ index ].v2.lightdir = vbo[ibo[idx2]].lightdir;
 
 	  primitives[ index ].normal = glm::cross( glm::normalize( vbo[ibo[idx1]].position - vbo[ibo[idx0]].position ),
@@ -244,6 +266,8 @@ __global__ void rasterizationKernel(triangle* primitives, int primitivesCount, f
 	  int dIndex;
 	  int dY;
 
+	  float depth = 0;
+
 	  for( int y = minP.y; y <= maxP.y; y++ )
 	  {
 		  dY = y*resolution.x;
@@ -253,12 +277,12 @@ __global__ void rasterizationKernel(triangle* primitives, int primitivesCount, f
 			  dIndex = dY + x;
 			  if( isBarycentricCoordInBounds( barycoord ) )
 			  {
-				  float depth = getZAtCoordinate( barycoord, tri );
+				  depth = getZAtCoordinate( barycoord, tri );
 				  bool inLoop = true;
 				  while( inLoop )
 				  {
-					  if( atomicExch( &(lock[dIndex]), 1 ) == 0 )
-					  {
+					  //if( atomicExch( &(lock[dIndex]), 1 ) == 0 )
+					  //{
 						  if( depth > depthbuffer[dIndex].position.z )
 						  {
 							  depthbuffer[dIndex].position.x = x;
@@ -273,8 +297,8 @@ __global__ void rasterizationKernel(triangle* primitives, int primitivesCount, f
 															 tri.v2.lightdir*barycoord.z;
 						  }
 						  inLoop = false;
-						  atomicExch( &(lock[dIndex]), 0 );
-					  }
+						  //atomicExch( &(lock[dIndex]), 0 );
+					  //}
 				  }
 			  }
 		  }
@@ -308,11 +332,13 @@ __global__ void render(glm::vec2 resolution, fragment* depthbuffer, glm::vec3* f
 }
 
 // Wrapper for the __global__ call that sets up the kernel calls and does a ton of memory management
-void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float* vbo, int vbosize, float* cbo, int cbosize, int* ibo, int ibosize)
+void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float* vbo, int vbosize, float* cbo, int cbosize, int* ibo, int ibosize, glm::vec3 params)
 {
+	float camtilt = params.y/180.0f*3.14159;
+
 	cudaMat4 view = {	glm::vec4( 1, 0, 0, 0 ),
-						glm::vec4( 0, cos( -3.14159/4 ), sin( -3.14159/4 ), 0 ),
-						glm::vec4( 0,-sin( -3.14159/4 ), cos( -3.14159/4 ), -3 ),
+						glm::vec4( 0, cos( camtilt ), sin( camtilt ), 0 ),
+						glm::vec4( 0,-sin( camtilt ), cos( camtilt ), params.z-3 ),
 						glm::vec4( 0, 0, 0, 1 ) }; 
 
 	cudaMat4 projection = {	glm::vec4( 2.41421, 0, 0, 0 ),
@@ -325,11 +351,50 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float*
 						glm::vec4( 0, 0, 1, 0 ),
 						glm::vec4( 0, 0, 0, 1 ) };
 	
+	float bodyrotate = params.x/180.0f*3.14159;
+	
+	cudaMat4 model = {	glm::vec4( cos( bodyrotate ), 0, sin( bodyrotate ), 0 ),
+						glm::vec4( 0,                 1, 0,                 0 ),
+						glm::vec4(-sin( bodyrotate ), 0, cos( bodyrotate ), 0 ),
+						glm::vec4( 0,                 0, 0,                 1 ) };
 
-	cudaMat4 model = {	glm::vec4( cos( frame/180.0f*3.14159 ), 0, sin( frame/180.0f*3.14159 ), 0 ),
-						glm::vec4( 0,                           1, 0,                           0 ),
-						glm::vec4(-sin( frame/180.0f*3.14159 ), 0, cos( frame/180.0f*3.14159 ), 0 ),
-						glm::vec4( 0,                           0, 0,                           1 ) };
+	
+	cudaMat4 rtrans = {	glm::vec4( 1, 0, 0, -.06 ),
+						glm::vec4( 0, 1, 0, -.35 ),
+						glm::vec4( 0, 0, 1, 0 ),
+						glm::vec4( 0, 0, 0, 1 ) };
+
+	float headtilt = cos( frame*(11)/180.0f*3.14159 )*0.2;
+
+	cudaMat4 no = {		glm::vec4( cos( headtilt ), 0, sin( headtilt ), 0 ),
+						glm::vec4( 0,               1, 0,               0 ),
+						glm::vec4(-sin( headtilt ), 0, cos( headtilt ), 0 ),
+						glm::vec4( 0,               0, 0,               1 ) };
+	
+	headtilt = sin( frame*(7)/180.0f*3.14159 )*0.3;
+
+	cudaMat4 yes = {	glm::vec4( cos( headtilt ), sin( headtilt ), 0, 0 ),
+						glm::vec4(-sin( headtilt ), cos( headtilt ), 0, 0 ),
+						glm::vec4( 0, 0, 1, 0 ),
+						glm::vec4( 0, 0, 0, 1 ) };
+
+	headtilt = sin( frame*(13)/180.0f*3.14159 )*0.15;
+
+	cudaMat4 what = {	glm::vec4( 1, 0, 0, 0 ),
+						glm::vec4( 0, cos( headtilt ), sin( headtilt ), 0 ),
+						glm::vec4( 0,-sin( headtilt ), cos( headtilt ), 0 ),
+						glm::vec4( 0, 0, 0, 1 ) };
+
+	cudaMat4 ftrans = {	glm::vec4( 1, 0, 0, .06 ),
+						glm::vec4( 0, 1, 0, .35 ),
+						glm::vec4( 0, 0, 1, 0 ),
+						glm::vec4( 0, 0, 0, 1 ) };
+
+	cudaMat4 head = utilityCore::glmMat4ToCudaMat4( utilityCore::cudaMat4ToGlmMat4( ftrans ) *
+													utilityCore::cudaMat4ToGlmMat4( yes ) * 
+													utilityCore::cudaMat4ToGlmMat4( no ) * 
+													utilityCore::cudaMat4ToGlmMat4( what ) * 
+													utilityCore::cudaMat4ToGlmMat4( rtrans ) );
 
   // set up crucial magic
   int tileSize = 8;
@@ -382,14 +447,14 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float*
   //------------------------------
   //vertex shader
   //------------------------------
-  vertexShadeKernel<<<primitiveBlocks, tileSize>>>(device_vbo, vbosize, device_vboFull, model, glm::vec3(10,10,10));
+  vertexShadeKernel<<<primitiveBlocks, tileSize>>>(device_vbo, vbosize, device_vboFull, model, head, glm::vec3(10,10,10));
 
   cudaDeviceSynchronize();
   //------------------------------
   //primitive assembly
   //------------------------------
   primitiveBlocks = ceil(((float)ibosize/3)/((float)tileSize));
-  primitiveAssemblyKernel<<<primitiveBlocks, tileSize>>>(device_vboFull, vbosize, device_cbo, 3/*cbosize*/, device_ibo, ibosize, primitives, 0*(int)frame, view, projection, screen);
+  primitiveAssemblyKernel<<<primitiveBlocks, tileSize>>>(device_vboFull, vbosize, device_cbo, cbosize, device_ibo, ibosize, primitives, 0*(int)frame, view, projection, screen);
   
   checkCUDAError("Prim Assembler");
   cudaDeviceSynchronize();

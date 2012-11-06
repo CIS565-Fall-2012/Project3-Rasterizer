@@ -230,7 +230,6 @@ c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\include\mmintrin.h
 c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\include\crtdefs.h
 c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\include\malloc.h
 c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\include\crtdefs.h
-c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\include\ammintrin.h
 c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\include\mm3dnow.h
 c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\include\crtdefs.h
 c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\include\mmintrin.h
@@ -335,124 +334,120 @@ C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v4.2\include\thrust/random/un
 C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v4.2\include\thrust/random/detail/uniform_real_distribution.inl
 C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v4.2\include\thrust/random/normal_distribution.h
 C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v4.2\include\thrust/random/detail/normal_distribution.inl
-c:\users\wjboone\documents\github\project3-rasterizer\src\rasterizeKernels.h
+c:\users\liam\documents\github\project3-rasterizer\src\rasterizeKernels.h
 C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v4.2\include\cuda.h
 C:/ProgramData/NVIDIA Corporation/NVIDIA GPU Computing SDK 4.2/C/common/inc\cutil_math.h
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm/glm.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core/_fixes.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core/setup.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\./core/_detail.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\setup.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm/glm.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core/_fixes.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core/setup.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\./core/_detail.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\setup.hpp
 c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\include\cassert
 c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\include\assert.h
 c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\include\crtdefs.h
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\./core/type.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_half.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_half.inl
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\_detail.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_float.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_half.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\setup.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_int.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\setup.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\_detail.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_gentype.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_size.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_vec1.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_vec.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_gentype.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_float.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_int.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_size.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\_swizzle.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\_swizzle_func.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_vec1.inl
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_vec2.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_vec.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_float.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_int.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_size.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\_swizzle.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_vec2.inl
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_vec3.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_vec.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_float.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_int.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_size.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\_swizzle.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_vec3.inl
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_vec4.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_vec.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_float.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_int.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_size.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\_swizzle.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_vec4.inl
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_mat2x2.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_mat.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_gentype.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_mat2x2.inl
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_mat2x3.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_mat.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_mat2x3.inl
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_mat2x4.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_mat.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_mat2x4.inl
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_mat3x2.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_mat.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_mat3x2.inl
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_mat3x3.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_mat.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_mat3x3.inl
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_mat3x4.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_mat.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_mat3x4.inl
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_mat4x2.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_mat.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_mat4x2.inl
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_mat4x3.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_mat.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_mat4x3.inl
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_mat4x4.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_mat.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\type_mat4x4.inl
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\./core/func_trigonometric.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\func_trigonometric.inl
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\_vectorize.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\./core/func_exponential.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\func_exponential.inl
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\_vectorize.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\./core/func_common.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\_fixes.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\func_common.inl
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\_vectorize.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\./core/func_packing.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\func_packing.inl
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\./core/func_geometric.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\func_geometric.inl
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\_vectorize.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\./core/func_matrix.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\func_matrix.inl
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\_vectorize.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\./core/func_vector_relational.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\_detail.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\func_vector_relational.inl
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\./core/func_integer.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\func_integer.inl
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\_vectorize.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\./core/func_noise.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core\func_noise.inl
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\./core/_swizzle.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm/gtc/matrix_transform.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\gtc\../glm.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core/_fixes.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\gtc\matrix_transform.inl
-c:\users\wjboone\documents\github\project3-rasterizer\src\rasterizeTools.h
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm/glm.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core/_fixes.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\utilities.h
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm/glm.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core/_fixes.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\./core/type.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_half.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_half.inl
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\_detail.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_float.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_half.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\setup.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_int.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\setup.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\_detail.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_gentype.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_size.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_vec1.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_vec.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_gentype.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_float.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_int.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_size.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\_swizzle.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\_swizzle_func.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_vec1.inl
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_vec2.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_vec.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_float.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_int.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_size.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\_swizzle.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_vec2.inl
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_vec3.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_vec.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_float.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_int.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_size.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\_swizzle.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_vec3.inl
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_vec4.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_vec.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_float.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_int.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_size.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\_swizzle.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_vec4.inl
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_mat2x2.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_mat.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_gentype.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_mat2x2.inl
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_mat2x3.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_mat.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_mat2x3.inl
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_mat2x4.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_mat.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_mat2x4.inl
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_mat3x2.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_mat.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_mat3x2.inl
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_mat3x3.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_mat.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_mat3x3.inl
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_mat3x4.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_mat.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_mat3x4.inl
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_mat4x2.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_mat.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_mat4x2.inl
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_mat4x3.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_mat.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_mat4x3.inl
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_mat4x4.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_mat.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\type_mat4x4.inl
+c:\users\liam\documents\github\project3-rasterizer\src\glm\./core/func_trigonometric.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\func_trigonometric.inl
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\_vectorize.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\./core/func_exponential.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\func_exponential.inl
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\_vectorize.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\./core/func_common.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\_fixes.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\func_common.inl
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\_vectorize.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\./core/func_packing.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\func_packing.inl
+c:\users\liam\documents\github\project3-rasterizer\src\glm\./core/func_geometric.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\func_geometric.inl
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\_vectorize.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\./core/func_matrix.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\func_matrix.inl
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\_vectorize.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\./core/func_vector_relational.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\_detail.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\func_vector_relational.inl
+c:\users\liam\documents\github\project3-rasterizer\src\glm\./core/func_integer.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\func_integer.inl
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\_vectorize.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\./core/func_noise.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core\func_noise.inl
+c:\users\liam\documents\github\project3-rasterizer\src\glm\./core/_swizzle.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\rasterizeTools.h
+c:\users\liam\documents\github\project3-rasterizer\src\glm/glm.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core/_fixes.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\utilities.h
+c:\users\liam\documents\github\project3-rasterizer\src\glm/glm.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core/_fixes.hpp
 c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\include\algorithm
 c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\include\memory
 c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\include\xfwrap
@@ -529,8 +524,8 @@ c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\include\sstream
 c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\include\string
 c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\include\vector
 c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\include\xfunctional
-c:\users\wjboone\documents\github\project3-rasterizer\src\cudaMat4.h
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm/glm.hpp
-c:\users\wjboone\documents\github\project3-rasterizer\src\glm\core/_fixes.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\cudaMat4.h
+c:\users\liam\documents\github\project3-rasterizer\src\glm/glm.hpp
+c:\users\liam\documents\github\project3-rasterizer\src\glm\core/_fixes.hpp
 C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v4.2\include\cuda_runtime.h
-c:\users\wjboone\documents\github\project3-rasterizer\src\cudaMat4.h
+c:\users\liam\documents\github\project3-rasterizer\src\cudaMat4.h

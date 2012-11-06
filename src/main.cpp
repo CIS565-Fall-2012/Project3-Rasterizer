@@ -71,6 +71,8 @@ int main(int argc, char** argv){
   #else
     glutDisplayFunc(display);
     glutKeyboardFunc(keyboard);
+	glutMouseFunc(mouseClick);
+	glutMotionFunc(mouseDrag);
 
     glutMainLoop();
   #endif
@@ -81,6 +83,10 @@ int main(int argc, char** argv){
 //-------------------------------
 //---------RUNTIME STUFF---------
 //-------------------------------
+
+float azimuth = -90;
+float zenith = -45;
+float zoom = 0;
 
 void runCuda(){
   // Map OpenGL buffer object for writing from CUDA on a single GPU
@@ -100,7 +106,7 @@ void runCuda(){
   ibosize = mesh->getIBOsize();
 
   cudaGLMapBufferObject((void**)&dptr, pbo);
-  cudaRasterizeCore(dptr, glm::vec2(width, height), frame, vbo, vbosize, cbo, cbosize, ibo, ibosize);
+  cudaRasterizeCore(dptr, glm::vec2(width, height), frame, vbo, vbosize, cbo, cbosize, ibo, ibosize, glm::vec3( azimuth, zenith, zoom ) );
   cudaGLUnmapBufferObject(pbo);
 
   vbo = NULL;
@@ -178,14 +184,47 @@ void runCuda(){
 
   void keyboard(unsigned char key, int x, int y)
   {
-    switch (key) 
-    {
-       case(27):
-         shut_down(1);    
-         break;
-    }
-  }
+		switch (key) 
+		{
+		case('['):
+			zoom -=0.01;
+			break;
+		case(']'):
+			zoom +=0.01;
+			break;
+		case(27):
+			shut_down(1);    
+			break;
 
+		}
+  }
+  
+  int buttonPress;
+  int old_X, old_Y;
+	void mouseClick(int button, int state, int x, int y)
+	{
+		if( state == GLUT_DOWN )
+		{
+			buttonPress = button;
+		}
+		old_X = x;
+		old_Y = y;
+	}
+
+	void mouseDrag(int x, int y)
+	{
+		if( buttonPress == GLUT_LEFT_BUTTON )
+		{
+			zenith -= y-old_Y;
+			azimuth += x-old_X;
+		}
+		else
+		{
+			zoom += 0.001* (y-old_Y);
+		}
+		old_X = x;
+		old_Y = y;
+	}
 #endif
   
 //-------------------------------
