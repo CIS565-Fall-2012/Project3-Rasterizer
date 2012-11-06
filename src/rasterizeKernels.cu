@@ -260,8 +260,7 @@ __global__ void rasterizationKernel(const triangle* primitives, int primitivesCo
 
 //TODO: Implement a fragment shader
 __global__ void fragmentShadeKernel(fragment* depthbuffer, glm::vec2 resolution, 
-									const Light* light, glm::vec3 eyePosition, bool isCboEnabled, 
-									bool isAntiAliasingEnabled, glm::vec3* framebuffer){
+									const Light* light, glm::vec3 eyePosition, bool isCboEnabled){
   int x = (blockIdx.x * blockDim.x) + threadIdx.x;
   int y = (blockIdx.y * blockDim.y) + threadIdx.y;
   int index = x + (y * resolution.x);
@@ -292,77 +291,6 @@ __global__ void fragmentShadeKernel(fragment* depthbuffer, glm::vec2 resolution,
 	  } else {
 		  depthbuffer[index].color = (0.4f*diffuse + 0.6f*specular) * light->color;
 	  }
-
-	  if (isAntiAliasingEnabled) {
-		  // use super-sampling
-		  thrust::default_random_engine rng(hash(index));
-		  thrust::uniform_real_distribution<float> u01(0,1);
-		  int numOfSuperSamples = 0;
-		  glm::vec3 colorAccumulator = depthbuffer[index].color;
-
-		  if (x > 0 && x < (int)resolution.x && y > 0 && y < (int)resolution.y) {			  
-			  numOfSuperSamples += 8;
-			  colorAccumulator += depthbuffer[index-(int)resolution.x-1].color; // upper-left
-			  colorAccumulator += depthbuffer[index-(int)resolution.x].color; // upper
-			  colorAccumulator += depthbuffer[index-(int)resolution.x+1].color; // upper-right
-			  colorAccumulator += depthbuffer[index-1].color; // left
-			  colorAccumulator += depthbuffer[index+1].color; // right
-			  colorAccumulator += depthbuffer[index+(int)resolution.x-1].color; // bottom-left
-			  colorAccumulator += depthbuffer[index+(int)resolution.x].color; // bottom
-			  colorAccumulator += depthbuffer[index+(int)resolution.x+1].color; // bottom-right
-		  } else if ((x == 0 && y == 0)) {
-			  numOfSuperSamples += 3;
-			  colorAccumulator += depthbuffer[1].color; // right
-			  colorAccumulator += depthbuffer[(int)resolution.x].color; // bottom
-			  colorAccumulator += depthbuffer[(int)resolution.x+1].color; // bottom-right
-		  } else if (x == (int)resolution.x-1 && y == (int)resolution.y-1) {
-			  numOfSuperSamples += 3;
-			  colorAccumulator += depthbuffer[index-(int)resolution.x-1].color; // upper-left
-			  colorAccumulator += depthbuffer[index-(int)resolution.x].color; // upper
-			  colorAccumulator += depthbuffer[index-1].color; // left
-		  } else if (x == 0 && y == (int)resolution.y-1) {
-			  numOfSuperSamples += 3;
-			  colorAccumulator += depthbuffer[index-(int)resolution.x].color; // upper
-			  colorAccumulator += depthbuffer[index-(int)resolution.x+1].color; // upper-right
-			  colorAccumulator += depthbuffer[index+1].color; // right
-		  } else if (x == (int)resolution.x-1 && y == 0) {
-			  numOfSuperSamples += 3;
-			  colorAccumulator += depthbuffer[index-1].color; // left
-			  colorAccumulator += depthbuffer[index+(int)resolution.x-1].color; // bottom-left
-			  colorAccumulator += depthbuffer[index+(int)resolution.x].color; // bottom
-		  } else if (x == 0) {
-			  numOfSuperSamples += 5;
-			  colorAccumulator += depthbuffer[index-(int)resolution.x].color; // upper
-			  colorAccumulator += depthbuffer[index-(int)resolution.x+1].color; // upper-right
-			  colorAccumulator += depthbuffer[index+1].color; // right
-			  colorAccumulator += depthbuffer[index+(int)resolution.x].color; // bottom
-			  colorAccumulator += depthbuffer[index+(int)resolution.x+1].color; // bottom-right
-		  } else if (x == (int)resolution.x-1) {
-			  numOfSuperSamples += 5;
-			  colorAccumulator += depthbuffer[index-(int)resolution.x-1].color; // upper-left
-			  colorAccumulator += depthbuffer[index-(int)resolution.x].color; // upper
-			  colorAccumulator += depthbuffer[index-1].color; // left
-			  colorAccumulator += depthbuffer[index+(int)resolution.x-1].color; // bottom-left
-			  colorAccumulator += depthbuffer[index+(int)resolution.x].color; // bottom
-		  } else if (y == 0) {
-			  numOfSuperSamples += 5;
-			  colorAccumulator += depthbuffer[index-(int)resolution.x].color; // upper
-			  colorAccumulator += depthbuffer[index-(int)resolution.x+1].color; // upper-right
-			  colorAccumulator += depthbuffer[index+1].color; // right
-			  colorAccumulator += depthbuffer[index+(int)resolution.x].color; // bottom
-			  colorAccumulator += depthbuffer[index+(int)resolution.x+1].color; // bottom-right
-		  } else if (y == (int)resolution.y-1) {
-			  numOfSuperSamples += 5;
-			  colorAccumulator += depthbuffer[index-(int)resolution.x-1].color; // upper-left
-			  colorAccumulator += depthbuffer[index-(int)resolution.x].color; // upper
-			  colorAccumulator += depthbuffer[index-1].color; // left
-			  colorAccumulator += depthbuffer[index+(int)resolution.x-1].color; // bottom-left
-			  colorAccumulator += depthbuffer[index+(int)resolution.x].color; // bottom
-		  }
-
-		  colorAccumulator /= (float)(numOfSuperSamples + 1);
-		  framebuffer[index] = colorAccumulator;
-	  }
   }
 }
 
@@ -376,6 +304,75 @@ __global__ void render(glm::vec2 resolution, fragment* depthbuffer, glm::vec3* f
 	if(x<=resolution.x && y<=resolution.y){
 		if (!isAntiAliasingEnabled) {
 			framebuffer[index] = depthbuffer[index].color;
+		} else { 
+			// use super-sampling
+			thrust::default_random_engine rng(hash(index));
+			thrust::uniform_real_distribution<float> u01(0,1);
+
+			glm::vec3 colorAccumulator = depthbuffer[index].color;
+			int numOfSuperSamples = 1;
+			if (x > 0 && x < (int)resolution.x-1 && y > 0 && y < (int)resolution.y-1) {			  
+				numOfSuperSamples += 8;
+				colorAccumulator += depthbuffer[index-(int)resolution.x-1].color; // upper-left
+				colorAccumulator += depthbuffer[index-(int)resolution.x].color; // upper
+				colorAccumulator += depthbuffer[index-(int)resolution.x+1].color; // upper-right
+				colorAccumulator += depthbuffer[index-1].color; // left
+				colorAccumulator += depthbuffer[index+1].color; // right
+				colorAccumulator += depthbuffer[index+(int)resolution.x-1].color; // bottom-left
+				colorAccumulator += depthbuffer[index+(int)resolution.x].color; // bottom
+				colorAccumulator += depthbuffer[index+(int)resolution.x+1].color; // bottom-right
+			} else if (x == 0 && y == 0) {
+				numOfSuperSamples += 3;
+				colorAccumulator += depthbuffer[1].color; // right
+				colorAccumulator += depthbuffer[(int)resolution.x].color; // bottom
+				colorAccumulator += depthbuffer[(int)resolution.x+1].color; // bottom-right
+			} else if (x == (int)resolution.x-1 && y == (int)resolution.y-1) {
+				numOfSuperSamples += 3;
+				colorAccumulator += depthbuffer[index-(int)resolution.x-1].color; // upper-left
+				colorAccumulator += depthbuffer[index-(int)resolution.x].color; // upper
+				colorAccumulator += depthbuffer[index-1].color; // left
+			} else if (x == 0 && y == (int)resolution.y-1) {
+				numOfSuperSamples += 3;
+				colorAccumulator += depthbuffer[index-(int)resolution.x].color; // upper
+				colorAccumulator += depthbuffer[index-(int)resolution.x+1].color; // upper-right
+				colorAccumulator += depthbuffer[index+1].color; // right
+			} else if (x == (int)resolution.x-1 && y == 0) {
+				numOfSuperSamples += 3;
+				colorAccumulator += depthbuffer[index-1].color; // left
+				colorAccumulator += depthbuffer[index+(int)resolution.x-1].color; // bottom-left
+				colorAccumulator += depthbuffer[index+(int)resolution.x].color; // bottom
+			} else if (x == 0) {
+				numOfSuperSamples += 5;
+				colorAccumulator += depthbuffer[index-(int)resolution.x].color; // upper
+				colorAccumulator += depthbuffer[index-(int)resolution.x+1].color; // upper-right
+				colorAccumulator += depthbuffer[index+1].color; // right
+				colorAccumulator += depthbuffer[index+(int)resolution.x].color; // bottom
+				colorAccumulator += depthbuffer[index+(int)resolution.x+1].color; // bottom-right
+			} else if (x == (int)resolution.x-1) {
+				numOfSuperSamples += 5;
+				colorAccumulator += depthbuffer[index-(int)resolution.x-1].color; // upper-left
+				colorAccumulator += depthbuffer[index-(int)resolution.x].color; // upper
+				colorAccumulator += depthbuffer[index-1].color; // left
+				colorAccumulator += depthbuffer[index+(int)resolution.x-1].color; // bottom-left
+				colorAccumulator += depthbuffer[index+(int)resolution.x].color; // bottom
+			} else if (y == 0) {
+				numOfSuperSamples += 5;
+				colorAccumulator += depthbuffer[index-(int)resolution.x].color; // upper
+				colorAccumulator += depthbuffer[index-(int)resolution.x+1].color; // upper-right
+				colorAccumulator += depthbuffer[index+1].color; // right
+				colorAccumulator += depthbuffer[index+(int)resolution.x].color; // bottom
+				colorAccumulator += depthbuffer[index+(int)resolution.x+1].color; // bottom-right
+			} else if (y == (int)resolution.y-1) {
+				numOfSuperSamples += 5;
+				colorAccumulator += depthbuffer[index-(int)resolution.x-1].color; // upper-left
+				colorAccumulator += depthbuffer[index-(int)resolution.x].color; // upper
+				colorAccumulator += depthbuffer[index-(int)resolution.x+1].color; // upper-right
+				colorAccumulator += depthbuffer[index-1].color; // left
+				colorAccumulator += depthbuffer[index+1].color; // right
+			}
+
+			colorAccumulator /= (float)numOfSuperSamples;
+			framebuffer[index] = colorAccumulator;
 		}
 	}
 }
@@ -467,8 +464,7 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame,
   //------------------------------
   //fragment shader
   //------------------------------
-  fragmentShadeKernel<<<fullBlocksPerGrid, threadsPerBlock>>>(depthbuffer, resolution, light, eyePosition, isCboEnabled, 
-	  isAntiAliasingEnabled, framebuffer);
+  fragmentShadeKernel<<<fullBlocksPerGrid, threadsPerBlock>>>(depthbuffer, resolution, light, eyePosition, isCboEnabled);
 
   cudaDeviceSynchronize();
   //------------------------------

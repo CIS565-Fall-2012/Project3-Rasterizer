@@ -233,8 +233,8 @@ void runCuda(){
 	   case('C'):
 		 isCboEnabled = !isCboEnabled;
 		 break;
-	   case('i'):
-	   case('I'):
+	   case('a'):
+	   case('A'):
 		 isAntiAliasingEnabled = !isAntiAliasingEnabled;
 		 break;
     }
