@@ -2,6 +2,24 @@
 // Written by Yining Karl Li, Copyright (c) 2012 University of Pennsylvania
 
 #include "main.h"
+#include "glm/gtx/vector_access.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtx/rotate_vector.hpp"
+#include "sceneStructs.h"
+#include "utilities.h"
+
+/**************** Global Variables ****************/
+int prev_mouse_x = 0;
+int prev_mouse_y = 0;
+Eye eye;
+float zNear = 1.f;
+float zFar = 100.f;
+glm::vec3 modelTrans(0.f, 0.f, 0.f);
+glm::vec3 modelRotat(0.f, 0.f, 0.f);
+glm::vec3 modelScale(0.5f, 0.5f, 0.5f);
+bool isCboEnabled = false;
+bool isAntiAliasingEnabled = true;
+/**************************************************/
 
 //-------------------------------
 //-------------MAIN--------------
@@ -28,6 +46,21 @@ int main(int argc, char** argv){
     cout << "Usage: mesh=[obj file]" << endl;
     return 0;
   }
+
+  // initialize a model transform matrix(world->model)
+  // currently, support only one object
+  modelMat = new glm::mat4(utilityCore::buildTransformationMatrix(modelTrans, modelRotat, modelScale));
+
+  // initialize a default camera(eye)
+  eye.fovy = 45.f;
+  glm::set(eye.position, 0.f, 0.f, 1.5f);
+  glm::set(eye.up, 0.f, 1.f, 0.f);
+  viewMat = new glm::mat4(glm::lookAt(eye.position, glm::vec3(0.f, 0.f, 0.f), eye.up));
+
+  // initialize a perspective projection matrix
+  projectMat = new glm::mat4(glm::perspective(eye.fovy, (float)width/height, zNear, zFar));
+
+  hostMVP_matrix = new cudaMat4(utilityCore::glmMat4ToCudaMat4(*projectMat * *viewMat * *modelMat ));
 
   frame = 0;
   seconds = time (NULL);
@@ -71,10 +104,13 @@ int main(int argc, char** argv){
   #else
     glutDisplayFunc(display);
     glutKeyboardFunc(keyboard);
+	glutSpecialFunc(keyboard_special);
+	glutMouseFunc(mouse);
 
     glutMainLoop();
   #endif
   kernelCleanup();
+  cleanMatrices();
   return 0;
 }
 
@@ -99,8 +135,18 @@ void runCuda(){
   ibo = mesh->getIBO();
   ibosize = mesh->getIBOsize();
 
+  // re-calculate MVP matrix
+  *modelMat = utilityCore::buildTransformationMatrix(modelTrans, modelRotat, modelScale);
+  *viewMat = glm::lookAt(eye.position, glm::vec3(0.f, 0.f, 0.f), eye.up);
+  *hostMVP_matrix = utilityCore::glmMat4ToCudaMat4(*projectMat * *viewMat * *modelMat);
+
+  glm::vec4 normalizedEyePos = *projectMat * glm::vec4(0.f, 0.f, 0.f, 1.f);
+
   cudaGLMapBufferObject((void**)&dptr, pbo);
-  cudaRasterizeCore(dptr, glm::vec2(width, height), frame, vbo, vbosize, cbo, cbosize, ibo, ibosize);
+  cudaRasterizeCore(dptr, glm::vec2(width, height), frame, 
+	                vbo, vbosize, cbo, cbosize, ibo, ibosize,
+					hostMVP_matrix, glm::vec3(normalizedEyePos.x, normalizedEyePos.y, normalizedEyePos.z),
+					isCboEnabled, isAntiAliasingEnabled);
   cudaGLUnmapBufferObject(pbo);
 
   vbo = NULL;
@@ -183,7 +229,75 @@ void runCuda(){
        case(27):
          shut_down(1);    
          break;
+	   case('c'):
+	   case('C'):
+		 isCboEnabled = !isCboEnabled;
+		 break;
+	   case('a'):
+	   case('A'):
+		 isAntiAliasingEnabled = !isAntiAliasingEnabled;
+		 break;
     }
+  }
+
+  void keyboard_special(int key, int x, int y)
+  {// callback function for glutSpecialFunc
+	  switch (key)
+	  {
+	  case(GLUT_KEY_UP):
+		  SyncAndResetCUDA();
+		  eye.position += 0.2f*(-eye.position);	
+		  initCuda();
+		  break;
+	  case(GLUT_KEY_DOWN):
+		  SyncAndResetCUDA();
+		  eye.position += 0.2f*eye.position;
+		  initCuda();
+		  break;
+	  }
+
+	  glutPostRedisplay();
+	  return;
+  }
+
+  void mouse(int button, int state, int x, int y)
+  {// callback function for mouse
+	  switch (button)
+	  {
+	  case GLUT_LEFT_BUTTON:
+		  prev_mouse_x = x;
+		  prev_mouse_y = y;
+		  glutMotionFunc(motion_left);
+		  break;
+	  }
+	  glutPostRedisplay();
+	  return;
+  }
+
+  void motion_left(int x, int y)
+  {// callback function for motion when left button is pressed
+	  if (!(x < 0 || x > width || y < 0 || y > height)) {
+		  float theta = -(x - prev_mouse_x)*90.f/width;
+		  float rho = (y - prev_mouse_y)*90.f/height;
+
+		  SyncAndResetCUDA();
+
+		  glm::vec3 f = glm::normalize(-eye.position);
+		  glm::vec3 s = glm::normalize(glm::cross(f, glm::normalize(eye.up)));
+		  eye.up = glm::normalize(glm::cross(s, f));
+		  
+		  eye.position = glm::rotate(eye.position, theta, eye.up);
+		 
+		  f = glm::normalize(-eye.position);
+		  s = glm::normalize(glm::cross(f, eye.up));
+		  eye.position = glm::rotate(eye.position, rho, s);
+		  eye.up = glm::normalize(glm::rotate(eye.up, rho, s));
+
+		  initCuda();
+
+		  glutPostRedisplay();
+	  }
+	  return;
   }
 
 #endif
@@ -351,4 +465,18 @@ void shut_down(int return_code){
   glfwTerminate();
   #endif
   exit(return_code);
+}
+
+void cleanMatrices()
+{
+	delete modelMat;
+	delete viewMat;
+	delete projectMat;
+	delete hostMVP_matrix;
+}
+
+void SyncAndResetCUDA()
+{
+	cudaDeviceSynchronize();
+	cudaDeviceReset(); 
 }
