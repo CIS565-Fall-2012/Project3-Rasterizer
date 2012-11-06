@@ -275,7 +275,7 @@ __global__ void fragmentShadeKernel(fragment* depthbuffer, glm::vec2 resolution,
 			}
 			colors+=(depthbuffer[index].color*diffuse) * diffuseLightColor + 0.15f * ambientColor * depthbuffer[index].color;
 			if(enableLIGHT2){
-					glm::vec3 lightPos2 = glm::vec3(-2,2.5,0.0f);
+					glm::vec3 lightPos2 = glm::vec3(2,2.5,1.0f);
 					glm::vec3 lightDir2 = glm::normalize(lightPos2 - depthbuffer[index].position);
 					float diffuse2 = glm::max(glm::dot(depthbuffer[index].normal, lightDir2), 0.0f);
 					float cosAngle2 = glm::max(glm::dot(camDir, lightDir2 - 2.0f * glm::dot( lightDir2, depthbuffer[index].normal ) * depthbuffer[index].normal ),0.0f);
@@ -384,6 +384,17 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float*
   primitiveAssemblyKernel<<<primitiveBlocks, tileSize>>>(device_vbo, vbosize, device_cbo, cbosize, device_ibo, ibosize,device_nbo, nbosize, primitives, cameraPos, model, projection,view, viewport, enableBACKFACECULL);
 
   cudaDeviceSynchronize();
+
+  //display the number of primitives currently displayed after back face cull
+  if(enableSTENCILTEST){
+	  int count = 0;
+	  for(int i =0;i<ibosize/3;i++){
+		  if(primitives[i].backFace == 0)
+			  count++;
+
+	  }
+	  cout<<"count of primitives displayed after back face cull "<<count<<endl;
+  }
   //------------------------------
   //rasterization
   //------------------------------

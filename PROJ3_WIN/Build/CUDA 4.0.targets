@@ -10,7 +10,7 @@
     
     <PropertyGroup>
         <CudaBuildRulesPath>$(MSBuildThisFileDirectory)CUDA 4.0.xml</CudaBuildRulesPath>
-        <CudaBuildTasksPath>$(MSBuildThisFileDirectory)Nvda.Build.CudaTasks.v4.0.dll</CudaBuildTasksPath>
+        <CudaBuildTasksPath>$(MSBuildThisFileDirectory)Nvda.Build.CudaTasks.v4.2.dll</CudaBuildTasksPath>
     </PropertyGroup>
     
     <UsingTask TaskName="CudaCompile" TaskFactory="XamlTaskFactory" AssemblyName="Microsoft.Build.Tasks.v4.0">
@@ -437,7 +437,7 @@
         DependsOnTargets="$(CudaCleanDependsOn)"
         Outputs="%(CudaCompile.CompileOut)">
         
-        <!-- TODO: Refactor to only have to specify this once. -->
+        <!-- TODO: Refactor to only have to specify this once. 
         <CudaCompile
             Condition="'%(CudaCompile.ExcludedFromBuild)' != 'true'"
             StandardOutputImportance="High"
@@ -470,7 +470,7 @@
             Warning="%(CudaCompile.Warning)"
 
             AdditionalOptions="%(CudaCompile.AdditionalOptions)"
-            CommandLineTemplate="&quot;$(CudaToolkitNvccPath)&quot; %(CudaCompile.ApiCommandLineTemplate) %(CudaCompile.CleanCommandLineTemplate)" />
+            CommandLineTemplate="&quot;$(CudaToolkitNvccPath)&quot; %(CudaCompile.ApiCommandLineTemplate) %(CudaCompile.CleanCommandLineTemplate)" />-->
 
         <Delete Files="%(CudaCompile.DepsOutputPath)" />
     </Target>

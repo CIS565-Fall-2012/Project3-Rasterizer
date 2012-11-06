@@ -30,7 +30,7 @@ struct fragment{
 };
 
 /************************************TRANSFORMATION SETTINGS**********************************************************/
-glm::vec3 cameraPos = glm::vec3(0.0f, 1.5f, 5.0f);
+glm::vec3 cameraPos = glm::vec3(0.0f, 1.5f, 4.5f);
 glm::mat4 projection =  glm::perspective(30.0f, static_cast<float>(200) / static_cast<float>(200), 0.1f, 50.0f);
 glm::mat4 view = glm::lookAt(cameraPos,
 				glm::vec3(0.0, 0.5, 0),//look at
@@ -38,7 +38,7 @@ glm::mat4 view = glm::lookAt(cameraPos,
 glm::mat4 model      = glm::mat4(1.0f);
 
 /**********************************LIGHT SETTINGS******************************************************************/
-glm::vec3 lightPos = glm::vec3(0,2.5,0.5f);
+glm::vec3 lightPos =  glm::vec3(0,4.5,0.0f);
 glm::vec3 diffuseLightColor = glm::vec3(1.0);
 glm::vec3 specularColor = glm::vec3(1.0, 1.0,1.0);
 float specularExponent = 5.0f;
