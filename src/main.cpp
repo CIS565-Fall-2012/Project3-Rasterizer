@@ -3,11 +3,16 @@
 
 #include "main.h"
 
+
 //-------------------------------
 //-------------MAIN--------------
 //-------------------------------
 
+int lastX = 0;
+int lastY = 0;
+
 int main(int argc, char** argv){
+
 
   bool loadedScene = false;
   for(int i=1; i<argc; i++){
@@ -28,6 +33,7 @@ int main(int argc, char** argv){
     cout << "Usage: mesh=[obj file]" << endl;
     return 0;
   }
+
 
   frame = 0;
   seconds = time (NULL);
@@ -71,6 +77,7 @@ int main(int argc, char** argv){
   #else
     glutDisplayFunc(display);
     glutKeyboardFunc(keyboard);
+	glutMouseFunc(mouseMotion);
 
     glutMainLoop();
   #endif
@@ -90,17 +97,24 @@ void runCuda(){
   vbo = mesh->getVBO();
   vbosize = mesh->getVBOsize();
 
-  float newcbo[] = {0.0, 1.0, 0.0, 
-                    0.0, 0.0, 1.0, 
-                    1.0, 0.0, 0.0};
+  float newcbo[] = {0.49, 0.49, 0.49, 
+                    0.49, 0.49, 0.49, 
+                    0.49, 0.49, 0.49};
   cbo = newcbo;
   cbosize = 9;
 
   ibo = mesh->getIBO();
   ibosize = mesh->getIBOsize();
 
+  nbo = mesh->getNBO();
+  nbosize = mesh->getNBOsize();
+
+  //model = glm::rotate(model, (float)frame, glm::vec3(0.0f, 1.0f, 0.0f));
+ // enableBACKFACECULL = false;
+//  enableSCISSORTEST  = false;
+
   cudaGLMapBufferObject((void**)&dptr, pbo);
-  cudaRasterizeCore(dptr, glm::vec2(width, height), frame, vbo, vbosize, cbo, cbosize, ibo, ibosize);
+  cudaRasterizeCore(dptr, glm::vec2(width, height), frame, vbo, vbosize, cbo, cbosize, ibo, ibosize, nbo, nbosize);
   cudaGLUnmapBufferObject(pbo);
 
   vbo = NULL;
@@ -178,12 +192,51 @@ void runCuda(){
 
   void keyboard(unsigned char key, int x, int y)
   {
-    switch (key) 
+	   if (key == 27) 
+		   shut_down(1);
+	   else if (key == 'b' || key == 'B')
+		    enableBackFaceCull();
+	   else if (key == 's' || key == 'S')
+		   enableScissorTest();
+	   else if (key == 't' || key == 'T')
+		   enableStencilBuffer();
+	   else if (key == 'l' || key == 'L')
+		   enableLight2();
+   /* switch (key) 
     {
        case(27):
          shut_down(1);    
          break;
-    }
+	   case('b' || 'B'):
+		   enableBackFaceCull();
+		   break;
+    }*/
+	 glutPostRedisplay();
+  }
+
+  void updateCam(int x, int y)
+  {
+
+		return;
+  }
+  void mouseMotion(int button, int state, int x, int y)
+  {
+
+	  if (button == GLUT_LEFT_BUTTON) {
+		  		
+		if (state == GLUT_UP) {
+			lastX = 0;
+			lastY = 0;
+		}
+		else if (state == GLUT_DOWN)  {
+			lastX = x;
+			lastY = y;
+			glutMotionFunc(updateCam);
+		}
+		glutPostRedisplay();
+	}
+	
+	return;
   }
 
 #endif

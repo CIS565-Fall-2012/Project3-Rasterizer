@@ -16,13 +16,45 @@ struct triangle {
   glm::vec3 c0;
   glm::vec3 c1;
   glm::vec3 c2;
+  float backFace;
+ 
 };
 
 struct fragment{
   glm::vec3 color;
   glm::vec3 normal;
   glm::vec3 position;
+  int syncLock;
+  float distance;
+
 };
+
+/************************************TRANSFORMATION SETTINGS**********************************************************/
+glm::vec3 cameraPos = glm::vec3(0.0f, 1.5f, 4.5f);
+glm::mat4 projection =  glm::perspective(30.0f, static_cast<float>(200) / static_cast<float>(200), 0.1f, 50.0f);
+glm::mat4 view = glm::lookAt(cameraPos,
+				glm::vec3(0.0, 0.5, 0),//look at
+				glm::vec3(0, -1, 0));//Head
+glm::mat4 model      = glm::mat4(1.0f);
+
+/**********************************LIGHT SETTINGS******************************************************************/
+glm::vec3 lightPos =  glm::vec3(0,4.5,0.0f);
+glm::vec3 diffuseLightColor = glm::vec3(1.0);
+glm::vec3 specularColor = glm::vec3(1.0, 1.0,1.0);
+float specularExponent = 5.0f;
+glm::vec3 ambientColor = glm::vec3(1.0,1.0,1.0);
+bool enableLIGHT2;
+
+
+
+/*********************************TESTING*************************************************************************/
+bool enableBACKFACECULL;
+bool enableSCISSORTEST;
+bool enableSTENCILTEST;
+
+glm::vec4 scissorTestWindow = glm::vec4(300,100,400,300);
+
+glm::vec4 stencilWindow[2];
 
 //Multiplies a cudaMat4 matrix and a vec4
 __host__ __device__ glm::vec3 multiplyMV(cudaMat4 m, glm::vec4 v){
@@ -32,6 +64,7 @@ __host__ __device__ glm::vec3 multiplyMV(cudaMat4 m, glm::vec4 v){
   r.z = (m.z.x*v.x)+(m.z.y*v.y)+(m.z.z*v.z)+(m.z.w*v.w);
   return r;
 }
+
 
 //LOOK: finds the axis aligned bounding box for a given triangle
 __host__ __device__ void getAABBForTriangle(triangle tri, glm::vec3& minpoint, glm::vec3& maxpoint){
@@ -65,14 +98,13 @@ __host__ __device__ glm::vec3 calculateBarycentricCoordinate(triangle tri, glm::
 
 //LOOK: checks if a barycentric coordinate is within the boundaries of a triangle
 __host__ __device__ bool isBarycentricCoordInBounds(glm::vec3 barycentricCoord){
-   return barycentricCoord.x >= 0.0 && barycentricCoord.x <= 1.0 &&
-          barycentricCoord.y >= 0.0 && barycentricCoord.y <= 1.0 &&
-          barycentricCoord.z >= 0.0 && barycentricCoord.z <= 1.0;
+   return barycentricCoord.x >= 0.0 && barycentricCoord.x <= 1.0 && barycentricCoord.y >= 0.0 && barycentricCoord.y <= 1.0 && barycentricCoord.z >= 0.0 && barycentricCoord.z <= 1.0;
+//	return barycentricCoord.x >= 0.0 && barycentricCoord.y >= 0.0 && (barycentricCoord.x+ barycentricCoord.y) <=1;
 }
 
 //LOOK: for a given barycentric coordinate, return the corresponding z position on the triangle
 __host__ __device__ float getZAtCoordinate(glm::vec3 barycentricCoord, triangle tri){
-  return -(barycentricCoord.x*tri.p0.z + barycentricCoord.y*tri.p1.z + barycentricCoord.z*tri.p2.z);
+  return (barycentricCoord.x*tri.p0.z + barycentricCoord.y*tri.p1.z + barycentricCoord.z*tri.p2.z);
 }
 
 #endif

@@ -51,12 +51,15 @@ float* cbo;
 int cbosize;
 int* ibo;
 int ibosize;
+float *nbo;
+int nbosize;
 
 //-------------------------------
 //----------CUDA STUFF-----------
 //-------------------------------
 
-int width=800; int height=800;
+int width=800; int height=600;
+
 
 //-------------------------------
 //-------------MAIN--------------
@@ -75,6 +78,9 @@ void runCuda();
 #else
 	void display();
 	void keyboard(unsigned char key, int x, int y);
+	void mouseMotion(int button, int state, int x, int y);
+	void updateCam(int x, int y);
+
 #endif
 
 //-------------------------------

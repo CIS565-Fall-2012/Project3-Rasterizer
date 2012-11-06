@@ -1,3 +1,37 @@
+--------------------------------------------------------------------------------
+SUBMITTED ITEMS
+--------------------------------------------------------------------------------
+I have implemented the following features:
+
+    Vertex Shading
+    Primitive Assembly with support for triangle VBOs/IBOs
+    Perspective Transformation
+    Rasterization through either a scanline or a tiled approach
+    Fragment Shading
+    A depth buffer for storing and depth testing fragments
+    Fragment to framebuffer writing
+    A simple lighting/shading scheme, such as Lambert as well as Blinn-Phong
+
+
+Some additional features:
+
+    Back-face culling - Performance did not improve after implementing this. Infact, the FPS count decreased after implementing this test. I implemented this at the primitive assembly stage.
+    Scissor test - Performance increased after implementing this test.
+    Correct color interpretation between points on a primitive
+	
+----------------------------------------------------------------------------------
+How to run
+----------------------------------------------------------------------------------
+The project is using CUDA 4.2. Hence, I have uploaded the project with the changes required for CUDA 4.2.
+There is little functionality which I have added to enable or disable some tests:
+1. Press B or b to enable/disable back face culling.
+2. Press s or S to enable/disable scissor test. Right now I have hard coded the window size.
+3. Press l or L to enable the second light.
+4. Press t ot T to see the number of triangles being drawn on output window.
+	
+Link to my blog: http://cudarasterizerproject.blogspot.com/
+
+
 -------------------------------------------------------------------------------
 CIS565: Project 3: CUDA Rasterizer
 -------------------------------------------------------------------------------

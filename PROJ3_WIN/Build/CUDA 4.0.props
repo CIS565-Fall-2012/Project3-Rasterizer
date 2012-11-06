@@ -7,13 +7,13 @@
 
     <PropertyGroup>
         <CudaToolkitDir Condition="'$(CudaToolkitDir)' == ''">$(CudaToolkitCustomDir)</CudaToolkitDir>
-        <CudaToolkitVersion>v4.0</CudaToolkitVersion>
-        <CudaToolkitFullVersion>4.00.0000.0000</CudaToolkitFullVersion>
+        <CudaToolkitVersion>v4.2</CudaToolkitVersion>
+        <CudaToolkitFullVersion>4.20.0000.0000</CudaToolkitFullVersion>
     </PropertyGroup>
 
     <PropertyGroup>
         <!-- Check CUDA Toolkit versioned environment variable. -->
-        <CudaToolkitDir Condition="'$(CudaToolkitDir)' == ''">$(CUDA_PATH_V4_0)</CudaToolkitDir>
+        <CudaToolkitDir Condition="'$(CudaToolkitDir)' == ''">$(CUDA_PATH_V4_2)</CudaToolkitDir>
 
         <!-- Last, check the new CUDA Toolkit style/Nsight toolkit registry value. -->
         <CudaToolkitDir Condition="'$(CudaToolkitDir)' == ''">$([MSBuild]::GetRegistryValueFromView('HKEY_LOCAL_MACHINE\SOFTWARE\NVIDIA Corporation\GPU Computing Toolkit\Cuda\$(CudaToolkitVersion)', 'InstallDir', null, RegistryView.Registry64, RegistryView.Registry32))</CudaToolkitDir>
