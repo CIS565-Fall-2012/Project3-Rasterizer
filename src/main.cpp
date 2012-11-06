@@ -17,7 +17,7 @@ float zFar = 100.f;
 glm::vec3 modelTrans(0.f, 0.f, 0.f);
 glm::vec3 modelRotat(0.f, 0.f, 0.f);
 glm::vec3 modelScale(0.5f, 0.5f, 0.5f);
-bool isCboEnabled = true;
+bool isCboEnabled = false;
 bool isAntiAliasingEnabled = true;
 /**************************************************/
 

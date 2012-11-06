@@ -357,9 +357,9 @@ __global__ void render(glm::vec2 resolution, fragment* depthbuffer, glm::vec3* f
 				colorAccumulator += depthbuffer[index+(int)resolution.x].color; // bottom
 			} else if (y == 0) {
 				numOfSuperSamples += 5;
-				colorAccumulator += depthbuffer[index-(int)resolution.x].color; // upper
-				colorAccumulator += depthbuffer[index-(int)resolution.x+1].color; // upper-right
+				colorAccumulator += depthbuffer[index-1].color; // left
 				colorAccumulator += depthbuffer[index+1].color; // right
+				colorAccumulator += depthbuffer[index+(int)resolution.x-1].color; // bottom-left
 				colorAccumulator += depthbuffer[index+(int)resolution.x].color; // bottom
 				colorAccumulator += depthbuffer[index+(int)resolution.x+1].color; // bottom-right
 			} else if (y == (int)resolution.y-1) {
