@@ -174,9 +174,9 @@ __global__ void primitiveAssemblyKernel(float* vbo, int vbosize, float* cbo, int
 			glm::vec3 viewVector = glm::vec3(pos.x,pos.y,pos.z) - campos;
 			glm::vec3 normal = glm::vec3(nbo[3 * iIndex], nbo[3 * iIndex + 1], nbo[3 * iIndex + 2]);
 
-			if(glm::dot( viewVector,glm::vec3(nbo[3 * iIndex], nbo[3 * iIndex + 1], nbo[3 * iIndex + 2])) < 0.6)
+			if(glm::dot( viewVector,glm::vec3(nbo[3 * iIndex], nbo[3 * iIndex + 1], nbo[3 * iIndex + 2])) < 0.5)
 		   {
-			// draw the polygon here, it's visible
+			// draw the polygon here
 				primitives[index].backFace = 0;
 			}else
 				primitives[index].backFace = 1;
