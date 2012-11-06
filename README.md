@@ -26,7 +26,7 @@ Finished following optional features
 -------------------------------------------------------------------------------
 BLOG LINK:
 -------------------------------------------------------------------------------
-http://gpuprojects.blogspot.com/2012/10/path-tracer.html
+http://gpuprojects.blogspot.com/2012/11/cuda-rasterizer.html
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
 Sequence Of Implementation
@@ -36,9 +36,9 @@ Sequence Of Implementation
 * Primitive Assembly
 	* In Primitive Assembly, vertices are grouped to form primitives. At the end of the Stage, backface culling flag are calculated.
 * Geometry Shader(Optional)
-	* Implemented a simple version of geomtery shader, for each primitives generate more primitives, if backface culling are enabled, flags are calculated
-* rasterization
-	* Implemented the rasterization based on tile approach. Before the raseterization, backface primitives and primitives outside viewPort are discarded(clipping). Antialiasing can be enabled in this stage. Depth test are used in this stage, only the nearest primitives colors are stored to frame buffer.	
+	* Implemented a simple version of geometry shader, for each primitives generate more primitives, if backface culling are enabled, flags are calculated
+* Rasterization
+	* Implemented the rasterization based on tile approach. Before the rasterization, backface primitives and primitives outside viewport are discarded(clipping). Antialiasing can be enabled in this stage. Depth test are used in this stage, only the nearest primitives colors are stored to frame buffer.	
 * Fragment Shader	
 	* Implemented a simple Blinn-Phong shader. All the color values are calculated in eye coordinates.
 
@@ -46,7 +46,7 @@ Sequence Of Implementation
 Other
 -------------------------------------------------------------------------------
 	1. Define the following parameter to enable different features :GEOMETRYSHADER,BackFaceCulling,AntiAliasing,Clipping in rasterizeKernel.cu.
-	2. zNear and zFar defined in rasterizeTools.h are used to control the front plane and back plane of the projection, value must>0.
+	2. zNear and zFar defined in rasterizeTools.h are used to control the near plane and far plane of the projection, value must>0.
 	3. DEPTHBUFFERSIZE defined in rasterizeTools.h is used to define depth buffer size (number of bite).
 	4. DEPTHPRECISION defined in rasterizeTools.h is used to define the distance of depth value which would be regarded as "close" in antialiasing.
 
