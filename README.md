@@ -16,7 +16,8 @@ Description
 -------------------------------------------------------------------------------
 In the third project we were tasked with coding a CUDA based rasterization pipeline. I have implemented the actual rasterization with a very simple method of checking barycentric coordinates in an AABB around the triangles being drawn.
 
-Features:
+Features:	
+
 	-Simple Lambert shading
 	-Mouse controlled camera
 		-left click and drag horizontally controls model rotation
