@@ -133,29 +133,35 @@ __global__ void sendImageToPBO(uchar4* PBOpos, glm::vec2 resolution, glm::vec3* 
 }
 
 //TODO: Implement a vertex shader
-__global__ void vertexShadeKernel(float* vbo, int vbosize, vertex* vboFull, glm::mat4 mM, glm::mat4 vM, glm::mat4 pM, glm::mat4 sM){
-  int index = (blockIdx.x * blockDim.x) + threadIdx.x;
-  if(index<vbosize/3)
-  {
-	  int idxX = index*3;
-	  int idxY = idxX + 1;
-	  int idxZ = idxX + 2;
+__global__ void vertexShadeKernel(float* vbo, int vbosize, vertex* vboFull, cudaMat4 mM, glm::vec3 lpos){
+	int index = (blockIdx.x * blockDim.x) + threadIdx.x;
+	if(index<vbosize/3)
+	{
+		int idxX = index*3;
+		int idxY = idxX + 1;
+		int idxZ = idxX + 2;
 
-	  glm::vec4 v( vbo[idxX], vbo[idxY], vbo[idxZ], 1.0f );
-	  //v = v*mM*vM*pM;
-	  v = mM*v;
+		glm::vec4 v( vbo[idxX], vbo[idxY], vbo[idxZ], 1.0f );
 
-	  vboFull[index].lightdir = ( glm::vec4( 10, 10, 10, 1 ) - v ).swizzle(glm::X, glm::Y, glm::Z);
+		v = multiplyMV4( mM, v );
+		
+		glm::vec4 u = v;
 
-	  //v = sM*pM*vM*v;
+		if( v.x > 0.2 )
+		{
+			u = multiplyMV4( mM, v );
+		}
+
+		vboFull[index].lightdir = ( glm::vec4( lpos, 1 ) - v ).swizzle(glm::X, glm::Y, glm::Z);
+
+		//v = sM*pM*vM*v;
 	  
-	  vboFull[index].position = v.swizzle(glm::X, glm::Y, glm::Z);
-	  vboFull[index].position /= v.w;
-  }
+		vboFull[index].position = v.swizzle(glm::X, glm::Y, glm::Z);
+	}
 }
 
 //TODO: Implement primative assembly
-__global__ void primitiveAssemblyKernel(vertex* vbo, int vbosize, float* cbo, int cbosize, int* ibo, int ibosize, triangle* primitives, int frame, glm::mat4 vM, glm::mat4 pM, glm::mat4 sM ){
+__global__ void primitiveAssemblyKernel(vertex* vbo, int vbosize, float* cbo, int cbosize, int* ibo, int ibosize, triangle* primitives, int frame, cudaMat4 vM, cudaMat4 pM, cudaMat4 sM ){
   int index = (blockIdx.x * blockDim.x) + threadIdx.x;
   int primitivesCount = ibosize/3;
   if(index<primitivesCount){
@@ -167,9 +173,13 @@ __global__ void primitiveAssemblyKernel(vertex* vbo, int vbosize, float* cbo, in
 	  int idxY = idxX + 1;
 	  int idxZ = idxX + 2;
 	  
-	  glm::vec4 pos = (sM*pM*vM*glm::vec4(vbo[ibo[idx0]].position, 1.0f));
-	  pos /= pos.w;
-	  primitives[ index ].v0.position = pos.swizzle(glm::X,glm::Y,glm::Z);
+	  glm::vec4 pos = glm::vec4( vbo[ibo[idx0]].position, 1.0f );
+	  
+	  pos = multiplyMV4( vM, pos );
+	  pos = multiplyMV4( pM, pos );
+	  pos = multiplyMV4( sM, pos );
+
+	  primitives[ index ].v0.position = (pos/pos.w).swizzle(glm::X,glm::Y,glm::Z);
 	  primitives[ index ].v0.color = glm::vec3( cbo[(idxX+frame)%cbosize], cbo[(idxY+frame)%cbosize], cbo[(idxZ+frame)%cbosize] );
 	  primitives[ index ].v0.lightdir = vbo[ibo[idx0]].lightdir;
 
@@ -177,9 +187,13 @@ __global__ void primitiveAssemblyKernel(vertex* vbo, int vbosize, float* cbo, in
 	  idxY = idxX + 1;
 	  idxZ = idxX + 2;
 
-	  pos = (sM*pM*vM*glm::vec4(vbo[ibo[idx1]].position, 1.0f));
-	  pos /= pos.w;
-	  primitives[ index ].v1.position = pos.swizzle(glm::X,glm::Y,glm::Z);
+	  pos = glm::vec4( vbo[ibo[idx1]].position, 1.0f );
+	  
+	  pos = multiplyMV4( vM, pos );
+	  pos = multiplyMV4( pM, pos );
+	  pos = multiplyMV4( sM, pos );
+
+	  primitives[ index ].v1.position = (pos/pos.w).swizzle(glm::X,glm::Y,glm::Z);
 	  primitives[ index ].v1.color = glm::vec3( cbo[(idxX+frame)%cbosize], cbo[(idxY+frame)%cbosize], cbo[(idxZ+frame)%cbosize] );
 	  primitives[ index ].v1.lightdir = vbo[ibo[idx1]].lightdir;
 
@@ -187,9 +201,13 @@ __global__ void primitiveAssemblyKernel(vertex* vbo, int vbosize, float* cbo, in
 	  idxY = idxX + 1;
 	  idxZ = idxX + 2;
 
-	  pos = (sM*pM*vM*glm::vec4(vbo[ibo[idx2]].position, 1.0f));
-	  pos /= pos.w;
-	  primitives[ index ].v2.position = pos.swizzle(glm::X,glm::Y,glm::Z);
+	  pos = glm::vec4( vbo[ibo[idx2]].position, 1.0f );
+	  
+	  pos = multiplyMV4( vM, pos );
+	  pos = multiplyMV4( pM, pos );
+	  pos = multiplyMV4( sM, pos );
+
+	  primitives[ index ].v2.position = (pos/pos.w).swizzle(glm::X,glm::Y,glm::Z);
 	  primitives[ index ].v2.color = glm::vec3( cbo[(idxX+frame)%cbosize], cbo[(idxY+frame)%cbosize], cbo[(idxZ+frame)%cbosize] );
 	  primitives[ index ].v2.lightdir = vbo[ibo[idx2]].lightdir;
 
@@ -270,7 +288,10 @@ __global__ void fragmentShadeKernel(fragment* depthbuffer, glm::vec2 resolution 
   int y = (blockIdx.y * blockDim.y) + threadIdx.y;
   int index = x + (y * resolution.x);
   if(x<=resolution.x && y<=resolution.y){
-	  depthbuffer[index].color *= glm::dot( glm::normalize( depthbuffer[index].normal ), glm::normalize( depthbuffer[index].lightdir ) );
+	  float diffuse = glm::dot( glm::normalize( depthbuffer[index].normal ), glm::normalize( depthbuffer[index].lightdir ) );
+	  float ambient = 0.1;
+	  float specular = 0;
+	  depthbuffer[index].color *= diffuse + ambient + specular;
   }
 }
 
@@ -289,13 +310,26 @@ __global__ void render(glm::vec2 resolution, fragment* depthbuffer, glm::vec3* f
 // Wrapper for the __global__ call that sets up the kernel calls and does a ton of memory management
 void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float* vbo, int vbosize, float* cbo, int cbosize, int* ibo, int ibosize)
 {
-	glm::mat4 modelMatrix = glm::rotate( glm::mat4(1.0f), frame, glm::vec3( 0, 1, 0 ) );
-	glm::mat4 projectionMatrix = glm::perspective( 45.0f, resolution.x/resolution.y, 0.1f, 100.0f );
-	glm::mat4 screenMatrix = glm::mat4(1.0f);
-	screenMatrix = glm::scale( screenMatrix, glm::vec3( resolution, 1.0f ) );
-	screenMatrix = glm::translate( screenMatrix, glm::vec3( 0.5, 0.5, 0 ) );
-	screenMatrix = glm::scale( screenMatrix, -glm::vec3( 0.5, 0.5, -1 ) );
-	glm::mat4 viewMatrix = glm::lookAt( glm::vec3( 0, 2, 2 ), glm::vec3( 0, 0, 0 ), glm::vec3( 0, 1, 0 ) );
+	cudaMat4 view = {	glm::vec4( 1, 0, 0, 0 ),
+						glm::vec4( 0, cos( -3.14159/4 ), sin( -3.14159/4 ), 0 ),
+						glm::vec4( 0,-sin( -3.14159/4 ), cos( -3.14159/4 ), -3 ),
+						glm::vec4( 0, 0, 0, 1 ) }; 
+
+	cudaMat4 projection = {	glm::vec4( 2.41421, 0, 0, 0 ),
+							glm::vec4( 0, 2.41421, 0, 0 ),
+							glm::vec4( 0, 0, -1.002, -0.2002 ),
+							glm::vec4( 0, 0, -1, 0 ) };
+
+	cudaMat4 screen = {	glm::vec4( -resolution.x/2, 0, 0, resolution.x/2 ),
+						glm::vec4( 0, -resolution.y/2, 0, resolution.y/2 ),
+						glm::vec4( 0, 0, 1, 0 ),
+						glm::vec4( 0, 0, 0, 1 ) };
+	
+
+	cudaMat4 model = {	glm::vec4( cos( frame/180.0f*3.14159 ), 0, sin( frame/180.0f*3.14159 ), 0 ),
+						glm::vec4( 0,                           1, 0,                           0 ),
+						glm::vec4(-sin( frame/180.0f*3.14159 ), 0, cos( frame/180.0f*3.14159 ), 0 ),
+						glm::vec4( 0,                           0, 0,                           1 ) };
 
   // set up crucial magic
   int tileSize = 8;
@@ -348,23 +382,24 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float*
   //------------------------------
   //vertex shader
   //------------------------------
-  vertexShadeKernel<<<primitiveBlocks, tileSize>>>(device_vbo, vbosize, device_vboFull, modelMatrix, viewMatrix, projectionMatrix, screenMatrix);
+  vertexShadeKernel<<<primitiveBlocks, tileSize>>>(device_vbo, vbosize, device_vboFull, model, glm::vec3(10,10,10));
 
   cudaDeviceSynchronize();
   //------------------------------
   //primitive assembly
   //------------------------------
   primitiveBlocks = ceil(((float)ibosize/3)/((float)tileSize));
-  primitiveAssemblyKernel<<<primitiveBlocks, tileSize>>>(device_vboFull, vbosize, device_cbo, cbosize, device_ibo, ibosize, primitives, 0*(int)frame, viewMatrix, projectionMatrix, screenMatrix);
-
+  primitiveAssemblyKernel<<<primitiveBlocks, tileSize>>>(device_vboFull, vbosize, device_cbo, 3/*cbosize*/, device_ibo, ibosize, primitives, 0*(int)frame, view, projection, screen);
+  
+  checkCUDAError("Prim Assembler");
   cudaDeviceSynchronize();
   //------------------------------
   //rasterization
   //------------------------------
   rasterizationKernel<<<primitiveBlocks, tileSize>>>(primitives, ibosize/3, depthbuffer, lock, resolution);
 
-  cudaDeviceSynchronize();
   checkCUDAError("Rasterizer");
+  cudaDeviceSynchronize();
   //------------------------------
   //fragment shader
   //------------------------------
