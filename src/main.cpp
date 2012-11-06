@@ -312,7 +312,7 @@ void keyboard(unsigned char key, int x, int y)
 			break;
 
 		case 'J':
-			modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5, 1.0, 2.0));
+			modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5, 1.0, 1.0));
 			break;
 		
 		case 'k':

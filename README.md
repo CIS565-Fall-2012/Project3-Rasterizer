@@ -3,8 +3,157 @@ CIS565: Project 3: CUDA Rasterizer
 -------------------------------------------------------------------------------
 Fall 2012
 -------------------------------------------------------------------------------
-Due Monday 11/05/2012
+Due Monday 11/06/2012
 -------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+Project Submission
+-------------------------------------------------------------------------------
+Find my blog with screen shot samples at : 
+http://mzshehzanayub.blogspot.com/2012/11/cuda-parallel-rasterizer.html
+
+The features and implementation details of the CUDA Rasterizer are as follows:
+
+Rasterization Pipeline
+----------------------
+
+**Vertex Shader**
+In the vertex shader of the rasterization pipeline, I mulptiplied the model-view-projection with the vertices in the VBO.
+
+**Primitive Assembly**
+The primitive structure in my code contains the following: 3 vertices (in screen space coordinates), 3 vertices (in world space), 3 normals (in world space), 3 colors, 3 UV Texture Coordinates, a boolean for Back-Face culling, and a boolean for enabling texture mapping.
+The data from the various buffers (VBO, NBO, CBO, TBO etc) are collected and put together in a primitives array. 
+
+**Rasterization**
+The rasterization is the most crucial and complex stage of the rasterization pipeline. The parallelization in this stage is per primitive, ie. a kernel is launched for each primitive. I used a scanline algorithm for this stage.
+The result of running this algorithm correctly is a fragment buffer of fragment data type of size resolution. Each fragment has a color, a position (in screen space), a position (in world space), a normal (in world space), a float for distance from the camera and a integer used for Atomic exchange.
+
+The algorithm is as follows:
+
+> 1. For each primitive, find the maximum and minimum coordinates of the triangle.
+> 2. Iterate through the scanlines between the minimum and maximum y-coordinates.
+> 3. Find the intersection of the scanline with the sides of the triangle. In most cases, there are 2 intersection points, except when only 1 vertex lies on the scanline.
+> 4. Iterate through the x-coordinates between the 2 intersection points.
+> 5. The X and Y coordinates represent the pixel coordinates on the screen.
+> 6. Use Barycentric coordinates to compute the fragment values like position, normal and color (or texture).
+> 7. Compute the depth test by finding the distance of the fragment in world space and if it is closer to the camera than the value in the depth buffer, then swap the values. (Use atomics to avoid races).
+
+
+**Fragment Shader**
+In the fragment shader I implemented a simple *Phong Shading* model (http://en.wikipedia.org/wiki/Phong_shading). The algorithm parallelizes for each fragment / pixel.
+The algorithm uses the world position of the fragment calculated in the Rasterization step of the pipeline. 
+
+Extra Features
+--------------
+**Tetxure Mapping with Texel Based Super-Sampled Anti-Aliasing**
+I implemented planar texture mapping as a part of the rasterization pipeline. The texture (Bitmap file) is read using EasyBMP Library. The UV coordinates are read from the vt values of the OBJ file. The anti-aliasing is a simple super sampling technique wherein each fragment samples the texel value from the texture map and also samples and averages its 8 neighboring texel colors. The texture map must be passed as a command line argument as texture="FilePath/FileName.ext".
+
+**Back-Face Culling**
+A simple algorithm where the faces (primitives) not visible to the camera are not processed in the rasterization step. The condition is that if the dot product of the face normal and the direction from camera to the point (generally centeroid) on the primitve is positive, then the face can be culled. It is best to use a epsilon while checking for the values.
+
+**Interaction with Camera and Mesh**
+The camera is interactive using the mouse. The mesh can be translated rotated and scaled using the keyboard. One can also switch between the different shading models using the keyboard. The interaction methods are listed in more detail in the interaction section of this document.
+
+-------------------------------------------------------------------------------
+How To Make It Work:
+-------------------------------------------------------------------------------
+**Customization**
+**In main.h**
+
+> 1. Use line 75 to specifiy the desired reolution of the screen.
+> 2. Use lines 85-89 to set the translation (85), rotation(86) and scale(87) of the mesh. Use line 89 to set the defualt color of the object.
+> 3. Use lines 102-105 to set the light position, light color, ambient light color and specular co-efficient of the light.
+
+**In main.cpp**
+
+> 1. Use lines 117 to 124 to set up the camera parameters.
+
+    theCamera.dfltEye    => Default Position
+    theCamera.dfltUp     => Defualt Up
+    theCamera.dfltLook   => Defualt Center of View
+    theCamera.dfltVfov   => Default Feild of View
+    theCamera.dfltAspect => Defualt aspect ratio (Computed from width and height -> do not change)
+    theCamera.dfltNear   => Default Projection Near
+    theCamera.dfltFar    => Defualt Projection Far
+    theCamera.dfltSpeed  => Default Speed of Mouse interation
+Note: These values will be used again when the camera is reset (see interation section for how to reset).
+
+**Include Texture Map in the command line argument as texture="FilePath/FileName.ext" (after the obj mesh file name argument)**.
+
+-------------------------------------------------------------------------------
+Interaction
+-------------------------------------------------------------------------------
+**Keyboard**
+
+Translate
+
+    case 'w': move the mesh +0.5 along local Y-axis
+    case 's': move the mesh -0.5 along local Y-axis
+    case 'd': move the mesh +0.5 along local X-axis
+    case 'a': move the mesh -0.5 along local X-axis
+    case 'q': move the mesh +0.5 along local Z-axis
+    case 'e': move the mesh -0.5 along local Z-axis
+
+Rotate
+
+    case 'x': rotate the mesh about local X-axis in anti-clockwise direction
+    case 'X': rotate the mesh about local X-axis in clockwise direction
+    case 'y': rotate the mesh about local Y-axis in anti-clockwise direction
+    case 'Y': rotate the mesh about local Y-axis in clockwise direction
+    case 'z': rotate the mesh about local Z-axis in anti-clockwise direction
+    case 'Z': rotate the mesh about local Z-axis in clockwise direction
+
+Scale
+
+    case 'j': double the scale of the mesh in local X-Axis
+    case 'J': half the scale of the mesh in local X-Axis
+    case 'k': double the scale of the mesh in local Y-Axis
+    case 'K': half the scale of the mesh in local Y-Axis
+    case 'l': double the scale of the mesh in local Z-Axis
+    case 'L': half the scale of the mesh in local Z-Axis
+
+Reset
+    
+case 'r': Reset the model matrix to identity.
+
+Shading
+
+    case '1': Toggle on or off the use of Fragment Shader (Defualt = On)
+    case '2': Toggle on or off the use of Diffuse Shading (Defualt = On) -> Fragment Shader must be enabled first
+    case '3': Toggle on or off the use of Specular Shading (Defualt = On) -> Fragment Shader must be enabled first
+    case '4': Toggle on or off the use of Ambient Light (Defualt = On) -> Fragment Shader must be enabled first
+    case '5': Toggle on or off the use of Depth Shading (Defualt = On) -> Fragment Shader must be enabled first. Skips diffuse, specular and ambient.
+    case '6': Toggle on or off the use of Textures (Defualt = On) -> Fragment Shader must be enabled first. 
+
+Close
+> Escape Key: Close the program.
+
+**Mouse**
+Mouse interation is all for the camera.
+
+Left Button Hold and Move:
+
+    Left: Orbit the camera left
+    Right: Orbit the camera right
+    Up: Orbit the camera up
+    Down: Orbit the camera down
+
+Middle Button (Click, not scroll) Hold and Move:
+
+    Left: translate the camera left
+    Right: translate the camera right
+    Up: translate the camera up
+    Down: translate the camera down
+
+Middle Button (Click, not scroll) + Keep Pressed ALT Key Hold and Move:
+
+    Up: Zoom Forwards (In)
+    Down: Zoom Backwards (Out)
+
+Right Button + CTRL (or) ALT + Move:
+
+    Moving the mouse with the right mouse button + either of CTRL or ALT held down will reset the Camera to its "Default" Parameters
+
 
 -------------------------------------------------------------------------------
 NOTE:
