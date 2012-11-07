@@ -41,6 +41,9 @@ void obj::buildVBOs(){
 	vector<float> VBOvec;
 	vector<float> NBOvec;
 	vector<int> IBOvec;
+	//ADDED
+	vector<float> VTOvec;
+	//ADDED
 	int index = 0;
 	bool genNormals = false;
 
@@ -80,6 +83,13 @@ void obj::buildVBOs(){
 					NBOvec.push_back(n[0]); NBOvec.push_back(n[1]); NBOvec.push_back(n[2]); //NBOvec.push_back(0.0f);
 				}
 
+				//ADDED
+				vector<int> facetexture = facetextures[k];
+				VTOvec.push_back(texturecoords[facetexture[0]][0]); VTOvec.push_back(texturecoords[facetexture[0]][1]); VTOvec.push_back(texturecoords[facetexture[0]][2]);
+				VTOvec.push_back(texturecoords[facetexture[i-1]][0]); VTOvec.push_back(texturecoords[facetexture[i-1]][1]); VTOvec.push_back(texturecoords[facetexture[i-1]][2]);
+				VTOvec.push_back(texturecoords[facetexture[i]][0]); VTOvec.push_back(texturecoords[facetexture[i]][1]); VTOvec.push_back(texturecoords[facetexture[i]][2]);
+				//ADDED
+
 				IBOvec.push_back(index+0); IBOvec.push_back(index+1); IBOvec.push_back(index+2);
 
 				index=index+3;
@@ -90,9 +100,11 @@ void obj::buildVBOs(){
 	vbo = new float[VBOvec.size()];
 	nbo = new float[NBOvec.size()];
 	ibo = new int[IBOvec.size()];
+	vto = new float[VTOvec.size()];
 	vbosize = (int)VBOvec.size();
 	nbosize = (int)NBOvec.size();
 	ibosize = (int)IBOvec.size();
+	vtosize = (int)VTOvec.size();
 
 	unsigned int VBOvecsize = VBOvec.size();
 	for(unsigned int i = 0; i < VBOvecsize; ++i){
@@ -108,6 +120,14 @@ void obj::buildVBOs(){
 	for(unsigned int i = 0; i < IBOvecsize; ++i){
 		ibo[i] = IBOvec[i];
 	}
+
+	//ADDED
+	unsigned int VTOsize = VTOvec.size();
+	for(unsigned int i = 0; i < VTOsize; ++i){
+		vto[i] = VTOvec[i];
+	}
+	//ADDED
+
 	setColor(glm::vec3(.4,.4,.4));
 }
 
@@ -330,6 +350,11 @@ int* obj::getIBO(){
 	return ibo;
 }
 
+float* obj::getVTO()
+{
+	return vto;
+}
+
 int obj::getVBOsize(){
 	return vbosize;
 }
@@ -344,6 +369,11 @@ int obj::getIBOsize(){
 
 int obj::getCBOsize(){
 	return cbosize;
+}
+
+int obj::getVTOsize()
+{
+	return vtosize;
 }
 
 //ADDED

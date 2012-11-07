@@ -37,6 +37,9 @@ struct triangle {
   glm::vec3 n0;
   glm::vec3 n1;
   glm::vec3 n2;
+  glm::vec2 uv0;
+  glm::vec2 uv1;
+  glm::vec2 uv2;
   //ADDED
 };
 
@@ -89,14 +92,14 @@ __host__ __device__ float calculateSignedArea(triangle tri){
 }
 
 //LOOK: helper function for calculating barycentric coordinates
-__host__ __device__ float calculateBarycentricCoordinateValue(glm::vec2 a, glm::vec2 b, glm::vec2 c, triangle tri){
+__host__ __device__ float calculateBarycentricCoordinateValue(glm::vec2 &a, glm::vec2 &b, glm::vec2 &c, triangle &tri){
   triangle baryTri;
   baryTri.p0 = glm::vec3(a,0); baryTri.p1 = glm::vec3(b,0); baryTri.p2 = glm::vec3(c,0);
   return calculateSignedArea(baryTri)/calculateSignedArea(tri);
 }
 
 //LOOK: calculates barycentric coordinates
-__host__ __device__ glm::vec3 calculateBarycentricCoordinate(triangle tri, glm::vec2 point){
+__host__ __device__ glm::vec3 calculateBarycentricCoordinate(triangle &tri, glm::vec2 &point){
   float beta  = calculateBarycentricCoordinateValue(glm::vec2(tri.p0.x,tri.p0.y), point, glm::vec2(tri.p2.x,tri.p2.y), tri);
   float gamma = calculateBarycentricCoordinateValue(glm::vec2(tri.p0.x,tri.p0.y), glm::vec2(tri.p1.x,tri.p1.y), point, tri);
   float alpha = 1.0-beta-gamma;
@@ -115,21 +118,29 @@ __host__ __device__ float getZAtCoordinate(glm::vec3 barycentricCoord, triangle 
   return -(barycentricCoord.x*tri.p0.z + barycentricCoord.y*tri.p1.z + barycentricCoord.z*tri.p2.z);
 }
 
-__host__ __device__ glm::vec3 getPositionAtBarycentricCoordinate(glm::vec3 barycentricCoord, triangle tri){
+__host__ __device__ glm::vec3 getPositionAtBarycentricCoordinate(const glm::vec3 &barycentricCoord, const triangle &tri){
   return (barycentricCoord.x*tri.p0 + barycentricCoord.y*tri.p1 + barycentricCoord.z*tri.p2);
 }
 
-__host__ __device__ glm::vec3 getColorAtBarycentricCoordinate(glm::vec3 barycentricCoord, triangle tri){
+__host__ __device__ glm::vec3 getColorAtBarycentricCoordinate(const glm::vec3 &barycentricCoord, const triangle &tri){
 	return (barycentricCoord.x*tri.c0 + barycentricCoord.y*tri.c1 + barycentricCoord.z*tri.c2);
 }
 
-__host__ __device__ float giveWorldSpaceDepth(glm::vec3 barycentricCoords, triangle originalTriangle, glm::vec3 eye)
+__host__ __device__ float giveWorldSpaceDepth(const glm::vec3 &barycentricCoords, const triangle &originalTriangle, const glm::vec3 &eye)
 {
 	return glm::distance(eye, getPositionAtBarycentricCoordinate(barycentricCoords, originalTriangle));
 }
 
-__host__ __device__ glm::vec3 getNormalAtBarycentricCoordinate(glm::vec3 barycentricCoord, triangle tri){
-	return (barycentricCoord.x*tri.n0 + barycentricCoord.y*tri.n1 + barycentricCoord.z*tri.n2);
+__host__ __device__ glm::vec3 getNormalAtBarycentricCoordinate(const glm::vec3 &barycentricCoord, const triangle &tri){
+	return glm::normalize(barycentricCoord.x*tri.n0 + barycentricCoord.y*tri.n1 + barycentricCoord.z*tri.n2);
+}
+
+__host__ __device__ glm::vec3 calculateReflectionDirection(const glm::vec3 &normal, const glm::vec3 &incident) {
+	return (incident - 2.0f * glm::dot(incident, normal) * normal);
+}
+
+__host__ __device__ glm::vec2 getTextureAtBarycentricCoordinate(const glm::vec3 &barycentricCoord, const triangle &tri){
+	return (barycentricCoord.x * tri.uv0 + barycentricCoord.y * tri.uv1 + barycentricCoord.z * tri.uv2);
 }
 
 #endif

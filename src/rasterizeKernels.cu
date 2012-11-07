@@ -9,13 +9,6 @@
 #include "rasterizeKernels.h"
 #include "rasterizeTools.h"
 
-//#include <sm_11_atomic_functions.h>
-//#include <sm_12_atomic_functions.h>
-//#include <sm_13_double_functions.h>
-//#include <sm_20_atomic_functions.h>
-//#include <sm_20_intrinsics.h>
-//#include <sm_30_intrinsics.h>
-
 glm::vec3* framebuffer;
 fragment* depthbuffer;
 float* device_vbo;
@@ -23,10 +16,10 @@ float* device_cbo;
 int* device_ibo;
 //ADDED
 float *device_nbo;
-//float *device_fnbo;
-//float *device_originalDepth;
+float *device_vto;
 triangle *originalPrimitives;
 Light *cudaLights;
+unsigned char *cudaTextureImage;
 //ADDED
 triangle* primitives;
 
@@ -106,8 +99,9 @@ __device__ void atomicCompareAndSwapFrag(int screenSpaceX, int screenSpaceY, glm
 	} while(old != 0);
 }
 
-__device__ void modifyFragmentAfterDepthTest(int screenSpaceX, int screenSpaceY, triangle screenSpaceTriangle, triangle originalTriangle,
-	glm::vec3 eye, glm::vec2 resolution, fragment *depthbuffer)
+__device__ void modifyFragmentAfterDepthTest(const int &screenSpaceX, const int &screenSpaceY, triangle &screenSpaceTriangle, const triangle &originalTriangle,
+	const glm::vec3 &eye, const glm::vec2 &resolution, fragment *depthbuffer,
+	unsigned char *textureImage, unsigned int textureWidth, unsigned int textureHeight)
 {
 	glm::vec3 barycentricCoords = calculateBarycentricCoordinate(screenSpaceTriangle, glm::vec2((float)screenSpaceX, (float)screenSpaceY));
 	float z = giveWorldSpaceDepth(barycentricCoords, originalTriangle, eye);
@@ -116,16 +110,42 @@ __device__ void modifyFragmentAfterDepthTest(int screenSpaceX, int screenSpaceY,
 	
 	if(f.worldDepth > z)
 	{
-		f.color = getColorAtBarycentricCoordinate(barycentricCoords, screenSpaceTriangle);
-		//f.normal = screenSpaceTriangle.faceNormal;
 		f.screenSpaceX = screenSpaceX;
 		f.screenSpaceY = screenSpaceY;
 		f.worldDepth = z;
 		f.lockVariable = 0;
 		f.worldPosition = getPositionAtBarycentricCoordinate(barycentricCoords, originalTriangle);
 		f.normal = getNormalAtBarycentricCoordinate(barycentricCoords, originalTriangle);
-		f.normal = glm::normalize(f.normal);
-		//writeToDepthbuffer(screenSpaceX, screenSpaceY, f, depthbuffer, resolution);
+
+		//Normal coloring
+		f.color = getColorAtBarycentricCoordinate(barycentricCoords, screenSpaceTriangle);
+
+		//Texturing
+		//printf("UV 0 \t%f\t%f\n", originalTriangle.uv0.x , originalTriangle.uv0.y);
+		//printf("UV 1 \t%f\t%f\n", originalTriangle.uv1.x , originalTriangle.uv1.y);
+		//printf("UV 2 \t%f\t%f\n", originalTriangle.uv2.x , originalTriangle.uv2.y);
+		
+		//glm::vec2 uv = getTextureAtBarycentricCoordinate(barycentricCoords, originalTriangle);
+		
+		//int imageCoordX = (int)(uv.x * (float)textureWidth);
+		//int imageCoordY = (int)(uv.y * (float)textureHeight);
+		//if(imageCoordX < 1023 && imageCoordY < 1023 && imageCoordX >= 0 && imageCoordY >= 0)
+		//{
+			//f.color = glm::vec3(-100, -100, -100);
+			//(float)textureImage[3 * (1023 * 1024 + 1023) - 1];
+			//f.color = glm::vec3((float)textureImage[3 * 1023 * 1024 + 1023 - 1], (float)textureImage[3 * 1023 * 1024 + 1023 - 1], (float)textureImage[3 * 1023 * 1024 + 1023 - 1]);
+			//f.color.x = (float)textureImage[3 * (imageCoordY * textureWidth + imageCoordX)] / 255.0f;
+			//f.color.y = (float)textureImage[3 * (imageCoordY * textureWidth + imageCoordX) + 1] / 255.0f;
+			//f.color.z = (float)textureImage[3 * (imageCoordY * textureWidth + imageCoordX) + 2] / 255.0f;
+		//}
+
+		/*if(uv.x > 1 || uv.y > 1)
+			printf("Image Co-ordinates %d\t%d\t%d\n", uv.x, uv.y, 3 * (imageCoordY * textureWidth + imageCoordX));*/
+
+		/*if(imageCoordX > 1023 || imageCoordY > 1023)
+			printf("Image Co-ordinates %d\t%d\t%d\n", imageCoordX, imageCoordY, 3 * (imageCoordY * textureWidth + imageCoordX));*/
+		//printf("Hmm %f\n", (float)textureImage[3 * (1023 * 1024 + 1023) - 1]);
+
 		atomicCompareAndSwapFrag(screenSpaceX, screenSpaceY, resolution, depthbuffer, f);
 	}
 }
@@ -188,19 +208,6 @@ __global__ void sendImageToPBO(uchar4* PBOpos, glm::vec2 resolution, glm::vec3* 
   }
 }
 
-
-////Original Depth Computing Kernel
-//__global__ void originalDepthComputingKernel(float *vbo, int vbosize, float *originalDepth, glm::vec3 eye)
-//{
-//	//Remember, this works only if model matrix is Identity, otherwise, vbo has to be first brought to world co-ordinates, then depth must be computed
-//	int index = (blockIdx.x * blockDim.x) + threadIdx.x;
-//	if(index < vbosize / 3)
-//	{
-//		glm::vec3 vertex(vbo[index], vbo[index + 1], vbo[index + 2]);
-//		originalDepth[index] = glm::distance(vertex, eye);
-//	}
-//}
-
 //TODO: Implement a vertex shader
 __global__ void vertexShadeKernel(float* vbo, int vbosize, cudaMat4 modelViewProjection)
 {
@@ -219,7 +226,7 @@ __global__ void vertexShadeKernel(float* vbo, int vbosize, cudaMat4 modelViewPro
 }
 
 //TODO: Implement primative assembly
-__global__ void primitiveAssemblyKernel(float* vbo, int vbosize, float* cbo, int cbosize, int* ibo, int ibosize, float *nbo, int nbosize, triangle* primitives)
+__global__ void primitiveAssemblyKernel(float* vbo, float* cbo, int* ibo, int ibosize, float *nbo, float *vto, triangle* primitives)
 {
   int index = (blockIdx.x * blockDim.x) + threadIdx.x;
   int primitivesCount = ibosize/3;
@@ -228,6 +235,8 @@ __global__ void primitiveAssemblyKernel(float* vbo, int vbosize, float* cbo, int
 	  int a = 3 * ibo[3 * index];
 	  int b = 3 * ibo[3 * index + 1];
 	  int c = 3 * ibo[3 * index + 2];
+
+	  triangle tri;
 
 	 // //Adding normals to triangles before bringing to NDC
 	 // glm::vec3 A = glm::vec3(vbo[b], vbo[b + 1], vbo[b + 2]) - glm::vec3(vbo[a], vbo[a + 1], vbo[a + 2]);
@@ -245,66 +254,74 @@ __global__ void primitiveAssemblyKernel(float* vbo, int vbosize, float* cbo, int
 	 // primitives[index].faceNormal = A;
 
 
-	  primitives[index].p0 = glm::vec3(vbo[a], vbo[a + 1], vbo[a + 2]);
-	  primitives[index].p1 = glm::vec3(vbo[b], vbo[b + 1], vbo[b + 2]);
-	  primitives[index].p2 = glm::vec3(vbo[c], vbo[c + 1], vbo[c + 2]);
-	  primitives[index].c0 = glm::vec3(cbo[0], cbo[1], cbo[2]);
-	  primitives[index].c1 = glm::vec3(cbo[3], cbo[4], cbo[5]);
-	  primitives[index].c2 = glm::vec3(cbo[6], cbo[7], cbo[8]);
+	  tri.p0 = glm::vec3(vbo[a], vbo[a + 1], vbo[a + 2]);
+	  tri.p1 = glm::vec3(vbo[b], vbo[b + 1], vbo[b + 2]);
+	  tri.p2 = glm::vec3(vbo[c], vbo[c + 1], vbo[c + 2]);
 
-	  primitives[index].n0 = glm::vec3(nbo[a], nbo[a + 1], nbo[a + 2]);
-	  primitives[index].n1 = glm::vec3(nbo[b], nbo[b + 1], nbo[b + 2]);
-	  primitives[index].n2 = glm::vec3(nbo[c], nbo[c + 1], nbo[c + 2]);
+	  //When only 3 colors are given
+	  /*if(vbosize == 9)
+	  {
+		  primitives[index].c0 = glm::vec3(cbo[0], cbo[1], cbo[2]);
+		  primitives[index].c1 = glm::vec3(cbo[3], cbo[4], cbo[5]);
+		  primitives[index].c2 = glm::vec3(cbo[6], cbo[7], cbo[8]);
+	  }
+	  else
+	  {
+		  //When more than 3 colors are given
+		  primitives[index].c0 = glm::vec3(cbo[a], cbo[a + 1], cbo[a + 2]);
+		  primitives[index].c1 = glm::vec3(cbo[b], cbo[b + 1], cbo[b + 2]);
+		  primitives[index].c2 = glm::vec3(cbo[c], cbo[c + 1], cbo[c + 2]);
+	  }*/
 
-	 // //Adding normals to triangles
-	 // glm::vec3 A = glm::vec3(vbo[b], vbo[b + 1], vbo[b + 2]) - glm::vec3(vbo[a], vbo[a + 1], vbo[a + 2]);
-	 // glm::vec3 B = glm::vec3(vbo[c], vbo[c + 1], vbo[c + 2]) - glm::vec3(vbo[a], vbo[a + 1], vbo[a + 2]);
-	 // //Reusing A instead of a new normal vector
-	 // A = glm::cross(A, B);
-	 // if(glm::dot(glm::vec3(vbo[a], vbo[a + 1], vbo[a + 2]), A) > 0.0f)
-	 // {
-		//  A = -A;
-	 // }
-	 // if(glm::length(A) > 0.001f)
-	 // {
-		//A = glm::normalize(A);
-	 // }
-	 // primitives[index].faceNormal = A;
+	  tri.c0 = glm::vec3(cbo[a], cbo[a + 1], cbo[a + 2]);
+	  tri.c1 = glm::vec3(cbo[b], cbo[b + 1], cbo[b + 2]);
+	  tri.c2 = glm::vec3(cbo[c], cbo[c + 1], cbo[c + 2]);
 
-	  //printf("%s\t%d\t%d\t%d\n", "IBO Indices", ibo[index], ibo[index + 1], ibo[index + 2]);
+	  tri.n0 = glm::vec3(nbo[a], nbo[a + 1], nbo[a + 2]);
+	  tri.n1 = glm::vec3(nbo[b], nbo[b + 1], nbo[b + 2]);
+	  tri.n2 = glm::vec3(nbo[c], nbo[c + 1], nbo[c + 2]);
+
+	  tri.uv0 = glm::vec2(vto[a], vto[a + 1]);
+	  tri.uv1 = glm::vec2(vto[b], vto[b + 1]);
+	  tri.uv2 = glm::vec2(vto[c], vto[c + 1]);
+
+	  primitives[index] = tri;
+
+	  //printf("%s\t%f\t%f\t%f\n", "VTO UV 0", vto[m], vto[m + 1], vto[m + 2]);
+	  //printf("%s\t%f\t%f\t%f\n", "VTO UV 1", vto[n], vto[n + 1], vto[n + 2]);
+	  //printf("%s\t%f\t%f\t%f\n", "VTO UV 2", vto[l], vto[l + 1], vto[l + 2]);
   }
 }
 
-__global__ void geometryShaderKernel(float *fnbo, triangle *primitives, int numberOfPrimitives)
+__global__ void geometryShaderKernel(triangle *originalPrimitives, int numberOfPrimitives, glm::vec3 eye)
 {
 	int index = (blockIdx.x * blockDim.x) + threadIdx.x;
 	if(index < numberOfPrimitives)
 	{
-		triangle tri = primitives[index];
-		glm::vec3 a = tri.p1 - tri.p0;
-		glm::vec3 b = tri.p2 - tri.p0;
-		glm::vec3 faceNormal = glm::cross(a, b);
-
-		//Vector from light to one vertex of triangle surface, which is located in the same place as eye i.e. origin, is just the position itself
-		if(glm::dot(tri.p0, faceNormal) > 0.0f)
+		triangle tri = originalPrimitives[index];
+		glm::vec3 avgNorm = glm::normalize((tri.n0 + tri.n1 + tri.n2) / 3.0f);
+		glm::vec3 avgPos = (tri.p0 + tri.p1 + tri.p2) / 3.0f;
+		if(glm::dot(avgNorm, glm::normalize(eye - avgPos)) < -0.5f)
 		{
-			faceNormal = -faceNormal;
+			originalPrimitives[index].c0.x = -10000.0f;
 		}
-
-		fnbo[index] = faceNormal.x;
-		fnbo[index + 1] = faceNormal.y;
-		fnbo[index + 2] = faceNormal.z;
 	}
 }
 
 //TODO: Implement a rasterization method, such as scanline.
-__global__ void rasterizationKernel(triangle* primitives, int primitivesCount, triangle *originalPrimitives, fragment* depthbuffer, glm::vec2 resolution, glm::vec3 worldEye)
+__global__ void rasterizationKernel(triangle* primitives, int primitivesCount, triangle *originalPrimitives, fragment* depthbuffer, glm::vec2 resolution, glm::vec3 worldEye,
+	unsigned char *textureImage, unsigned int textureWidth, unsigned int textureHeight)
 {
   int index = (blockIdx.x * blockDim.x) + threadIdx.x;
   if(index < primitivesCount)
   {
 	  triangle tri = primitives[index];
 	  triangle originalTriangle = originalPrimitives[index];
+	  //Back Face Culling
+	  if(originalTriangle.c0.x < -9999.0f)
+	  {
+		  return;
+	  }
 	  glm::vec2 s0, s1, s2;
 	  s0.x = (tri.p0.x + 1.0f) * resolution.x / 2.0f;
 	  s0.y = (tri.p0.y + 1.0f) * resolution.y / 2.0f;
@@ -360,7 +377,7 @@ __global__ void rasterizationKernel(triangle* primitives, int primitivesCount, t
 				  for(; x <= maxDanger; ++x)
 				  {
 					  //printf("%s\t%d\t%d\n", "Danger Y", x, y);
-					  modifyFragmentAfterDepthTest(x, y, tri, originalTriangle, worldEye, resolution, depthbuffer);
+					  modifyFragmentAfterDepthTest(x, y, tri, originalTriangle, worldEye, resolution, depthbuffer, textureImage, textureWidth, textureHeight);
 				  }
 			  }
 			  else
@@ -386,17 +403,17 @@ __global__ void rasterizationKernel(triangle* primitives, int primitivesCount, t
 				  {
 					  //Intersection with just one point i.e. one vertex
 					  //printf("%s\t%d\t%d\n", "Just one Point 2", (int)xIntersection2, y);
-					  modifyFragmentAfterDepthTest((int)xIntersection2, y, tri, originalTriangle, worldEye, resolution, depthbuffer);
+					  modifyFragmentAfterDepthTest((int)xIntersection2, y, tri, originalTriangle, worldEye, resolution, depthbuffer, textureImage, textureWidth, textureHeight);
 				  }
 				  else if(xIntersection1 < 0.0f && xIntersection2 < 0.0f)
 				  {
 					  //printf("%s\t%d\t%d\n", "Just one Point 0", (int)xIntersection0, y);
-					  modifyFragmentAfterDepthTest((int)xIntersection0, y, tri, originalTriangle, worldEye, resolution, depthbuffer);
+					  modifyFragmentAfterDepthTest((int)xIntersection0, y, tri, originalTriangle, worldEye, resolution, depthbuffer, textureImage, textureWidth, textureHeight);
 				  }
 				  else if(xIntersection0 < 0.0f && xIntersection2 < 0.0f)
 				  {
 					  //printf("%s\t%d\t%d\n", "Just one Point 1", (int)xIntersection1, y);
-					  modifyFragmentAfterDepthTest((int)xIntersection1, y, tri, originalTriangle, worldEye, resolution, depthbuffer);
+					  modifyFragmentAfterDepthTest((int)xIntersection1, y, tri, originalTriangle, worldEye, resolution, depthbuffer, textureImage, textureWidth, textureHeight);
 				  }
 				  else if(xIntersection0 < 0.0f)
 				  {
@@ -405,7 +422,7 @@ __global__ void rasterizationKernel(triangle* primitives, int primitivesCount, t
 					  for(; x <= maxIntersection; ++x)
 					  {
 						  //printf("%s\t%d\t%d\n", "12 Vertices", x, y);
-						  modifyFragmentAfterDepthTest(x, y, tri, originalTriangle, worldEye, resolution, depthbuffer);
+						  modifyFragmentAfterDepthTest(x, y, tri, originalTriangle, worldEye, resolution, depthbuffer, textureImage, textureWidth, textureHeight);
 					  }
 				  }
 				  else if(xIntersection1 < 0.0f)
@@ -415,7 +432,7 @@ __global__ void rasterizationKernel(triangle* primitives, int primitivesCount, t
 					  for(; x <= maxIntersection; ++x)
 					  {
 						  //printf("%s\t%d\t%d\n", "02 Vertices", x, y);
-						  modifyFragmentAfterDepthTest(x, y, tri, originalTriangle, worldEye, resolution, depthbuffer);
+						  modifyFragmentAfterDepthTest(x, y, tri, originalTriangle, worldEye, resolution, depthbuffer, textureImage, textureWidth, textureHeight);
 					  }
 				  }
 				  else if(xIntersection2 < 0.0f)
@@ -425,7 +442,7 @@ __global__ void rasterizationKernel(triangle* primitives, int primitivesCount, t
 					  for(; x <= maxIntersection; ++x)
 					  {
 						  //printf("%s\t%d\t%d\n", "10 Vertices", x, y);
-						  modifyFragmentAfterDepthTest(x, y, tri, originalTriangle, worldEye, resolution, depthbuffer);
+						  modifyFragmentAfterDepthTest(x, y, tri, originalTriangle, worldEye, resolution, depthbuffer, textureImage, textureWidth, textureHeight);
 					  }
 				  }
 			  }
@@ -457,17 +474,17 @@ __global__ void rasterizationKernel(triangle* primitives, int primitivesCount, t
 				{
 					//Intersection with just one point i.e. one vertex
 					//printf("%s\t%d\t%d\n", "Just one Point 2", (int)xIntersection2, y);
-					modifyFragmentAfterDepthTest((int)xIntersection2, y, tri, originalTriangle, worldEye, resolution, depthbuffer);
+					modifyFragmentAfterDepthTest((int)xIntersection2, y, tri, originalTriangle, worldEye, resolution, depthbuffer, textureImage, textureWidth, textureHeight);
 				}
 				else if(xIntersection1 < 0.0f && xIntersection2 < 0.0f)
 				{
 					//printf("%s\t%d\t%d\n", "Just one Point 0", (int)xIntersection0, y);
-					modifyFragmentAfterDepthTest((int)xIntersection0, y, tri, originalTriangle, worldEye, resolution, depthbuffer);
+					modifyFragmentAfterDepthTest((int)xIntersection0, y, tri, originalTriangle, worldEye, resolution, depthbuffer, textureImage, textureWidth, textureHeight);
 				}
 				else if(xIntersection0 < 0.0f && xIntersection2 < 0.0f)
 				{
 					//printf("%s\t%d\t%d\n", "Just one Point 1", (int)xIntersection1, y);
-					modifyFragmentAfterDepthTest((int)xIntersection1, y, tri, originalTriangle, worldEye, resolution, depthbuffer);
+					modifyFragmentAfterDepthTest((int)xIntersection1, y, tri, originalTriangle, worldEye, resolution, depthbuffer, textureImage, textureWidth, textureHeight);
 				}
 				else if(xIntersection0 < 0.0f)
 				{
@@ -476,7 +493,7 @@ __global__ void rasterizationKernel(triangle* primitives, int primitivesCount, t
 					for(; x <= maxIntersection; ++x)
 					{
 						//printf("%s\t%d\t%d\n", "12 Vertices", x, y);
-						modifyFragmentAfterDepthTest(x, y, tri, originalTriangle, worldEye, resolution, depthbuffer);
+						modifyFragmentAfterDepthTest(x, y, tri, originalTriangle, worldEye, resolution, depthbuffer, textureImage, textureWidth, textureHeight);
 					}
 				}
 				else if(xIntersection1 < 0.0f)
@@ -486,7 +503,7 @@ __global__ void rasterizationKernel(triangle* primitives, int primitivesCount, t
 					for(; x <= maxIntersection; ++x)
 					{
 						//printf("%s\t%d\t%d\n", "02 Vertices", x, y);
-						modifyFragmentAfterDepthTest(x, y, tri, originalTriangle, worldEye, resolution, depthbuffer);
+						modifyFragmentAfterDepthTest(x, y, tri, originalTriangle, worldEye, resolution, depthbuffer, textureImage, textureWidth, textureHeight);
 					}
 				}
 				else if(xIntersection2 < 0.0f)
@@ -496,7 +513,7 @@ __global__ void rasterizationKernel(triangle* primitives, int primitivesCount, t
 					for(; x <= maxIntersection; ++x)
 					{
 						//printf("%s\t%d\t%d\n", "10 Vertices", x, y);
-						modifyFragmentAfterDepthTest(x, y, tri, originalTriangle, worldEye, resolution, depthbuffer);
+						modifyFragmentAfterDepthTest(x, y, tri, originalTriangle, worldEye, resolution, depthbuffer, textureImage, textureWidth, textureHeight);
 					}
 				}
 			}
@@ -505,50 +522,41 @@ __global__ void rasterizationKernel(triangle* primitives, int primitivesCount, t
 }
 
 //TODO: Implement a fragment shader
-__global__ void fragmentShadeKernel(fragment* depthbuffer, glm::vec3 *framebuffer, glm::vec2 resolution, Light *lights, unsigned int numberOfLights)
+__global__ void fragmentShadeKernel(fragment* depthbuffer, glm::vec3 *framebuffer, glm::vec2 resolution, Light *lights, unsigned int numberOfLights, glm::vec3 eye)
 {
   int x = (blockIdx.x * blockDim.x) + threadIdx.x;
   int y = (blockIdx.y * blockDim.y) + threadIdx.y;
-  //int index = x + (y * resolution.x);
   if(x<=resolution.x && y<=resolution.y)
   {
 	  fragment f = getFromDepthbuffer(x, y, depthbuffer, resolution);
-	  //Computing color due to lambert shading and specular highlight
-	  glm::vec3 col(0, 0, 0);
-	  for(unsigned int i = 0; i < numberOfLights; ++i)
+	  if(!(f.worldDepth >= 99999.999f && f.worldDepth <= 100000.001f))
 	  {
-		  glm::vec3 lightVec = lights[i].pos - f.worldPosition;
-		  if(glm::length(lightVec) > 0.001f)
+		  //Computing color due to lambert shading and specular highlight
+		  glm::vec3 col(0, 0, 0);
+		  float specularCoefficient = 10;
+		  glm::vec3 fragmentToEye = glm::normalize(eye - f.worldPosition);
+		  for(unsigned int i = 0; i < numberOfLights; ++i)
 		  {
-			  lightVec = glm::normalize(lightVec);
+			  glm::vec3 lightVec = lights[i].pos - f.worldPosition;
+			  if(glm::length(lightVec) > 0.001f)
+			  {
+	  			  lightVec = glm::normalize(lightVec);
+			  }
+			  glm::vec3 reflectedRay = calculateReflectionDirection(f.normal, -lightVec);
+			  //Diffuse
+			  col += glm::dot(f.normal, lightVec) * f.color * lights[i].col;
+
+			  //Specular
+			  if(glm::length(f.color) > 0.01f)
+			  {
+				  col += pow(glm::dot(fragmentToEye, reflectedRay), specularCoefficient) * lights[i].col;
+			  }
 		  }
-		  col += glm::dot(f.normal, lightVec) * f.color * lights[i].col;
+
+		  float KA = 0.1f;	//Ambient Light coefficient
+		  f.color = col + KA * f.color;
+		  writeToDepthbuffer(x, y, f, depthbuffer, resolution);
 	  }
-
-	  float KA = 0.1f;	//Ambient Light coefficient
-	  f.color = col + KA * f.color;
-	  writeToDepthbuffer(x, y, f, depthbuffer, resolution);
-
-	  /*if(f.normal.x > 0 || f.normal.y > 0 || f.normal.z > 0)
-	  {
-		  printf("%s\t%f\t%f\t%f\n", "Fragment normals", f.normal.x, f.normal.y, f.normal.z);
-	  }*/
-	  /*if(f.color.x > 0 || f.color.y > 0 || f.color.z > 0)
-	  {
-		  printf("%s\t%f\t%f\t%f\n", "Fragment colors", f.color.x, f.color.y, f.color.z);
-	  }*/
-	  /*if(col.x > 0 || col.y > 0 || col.z > 0)
-	  {
-		  printf("%s\t%f\t%f\t%f\n", "Computed colors", col.x, col.y, col.z);
-	  }*/
-	  /*if(lightVec.x > 0 || lightVec.y > 0 || lightVec.z > 0)
-	  {
-		  printf("%s\t%f\t%f\t%f\n", "Light Vector", lightVec.x, lightVec.y, lightVec.z);
-	  }*/
-	  /*if(lights[0].pos.x > 0 || lights[0].pos.y > 0 || lights[0].pos.z > 0)
-	  {
-		  printf("%s\t%f\t%f\t%f\n", "Light Pos", lights[0].pos.x, lights[0].pos.y, lights[0].pos.z);
-	  }*/
   }
 }
 
@@ -567,7 +575,8 @@ __global__ void render(glm::vec2 resolution, fragment* depthbuffer, glm::vec3* f
 
 // Wrapper for the __global__ call that sets up the kernel calls and does a ton of memory management
 void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float* vbo, int vbosize, float* cbo, int cbosize, int* ibo, int ibosize, float *nbo, int nbosize,
-	cudaMat4 modelViewProjection, glm::vec3 eye, Light *lights, unsigned int numberOfLights)
+	float *vto, int vtosize, cudaMat4 modelViewProjection, glm::vec3 eye, Light *lights, unsigned int numberOfLights,
+	unsigned char *textureImage, unsigned int textureWidth, unsigned int textureHeight)
 {
 
   // set up crucial magic
@@ -587,10 +596,9 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float*
   clearImage<<<fullBlocksPerGrid, threadsPerBlock>>>(resolution, framebuffer, glm::vec3(0,0,0));
   
   fragment frag;
-  frag.color = glm::vec3(0,0,0);
+  frag.color = glm::vec3(0.5f, 0.5f, 0.5f);
   frag.normal = glm::vec3(0,0,0);
-  //frag.position = glm::vec3(0,0,-10000);
-  frag.worldDepth = 10000.0f;
+  frag.worldDepth = 100000.0f;
   frag.screenSpaceX = 0;
   frag.screenSpaceY = 0;
   frag.lockVariable = 0;
@@ -618,14 +626,12 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float*
   cudaMalloc((void**)&device_nbo, nbosize*sizeof(float));
   cudaMemcpy( device_nbo, nbo, nbosize*sizeof(float), cudaMemcpyHostToDevice);
 
-  /*device_fnbo = NULL;
-  cudaMalloc((void**)&device_fnbo, ibosize * sizeof(float));*/
+  device_vto = NULL;
+  cudaMalloc((void**)&device_vto, vtosize*sizeof(float));
+  cudaMemcpy( device_vto, vto, vtosize*sizeof(float), cudaMemcpyHostToDevice);
 
   tileSize = 32;
   int primitiveBlocks;
-
-  /*device_originalDepth = NULL;
-  cudaMalloc((void**)&device_originalDepth, ibosize * sizeof(float));*/
 
   originalPrimitives = NULL;
   cudaMalloc((void**)&originalPrimitives, (ibosize / 3) * sizeof(triangle));
@@ -634,17 +640,15 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float*
   cudaMalloc((void**)&cudaLights, numberOfLights * sizeof(Light));
   cudaMemcpy( cudaLights, lights, numberOfLights*sizeof(Light), cudaMemcpyHostToDevice);
 
-  ////------------------------------
-  ////Computing original depth in world
-  ////------------------------------
-  //originalDepthComputingKernel<<<primitiveBlocks, tileSize>>>(device_vbo, vbosize, device_originalDepth, eye);
-  //cudaDeviceSynchronize();
+  cudaTextureImage = NULL;
+  cudaMalloc((void**)&cudaTextureImage, 3 * textureWidth * textureHeight * sizeof(unsigned char));
+  cudaMemcpy( cudaTextureImage, textureImage, 3 * textureWidth * textureHeight * sizeof(unsigned char), cudaMemcpyHostToDevice);
 
   //------------------------------
   //Original primitive assembly
   //------------------------------
   primitiveBlocks = ceil(((float)ibosize/3)/((float)tileSize));
-  primitiveAssemblyKernel<<<primitiveBlocks, tileSize>>>(device_vbo, vbosize, device_cbo, cbosize, device_ibo, ibosize, device_nbo, nbosize, originalPrimitives);
+  primitiveAssemblyKernel<<<primitiveBlocks, tileSize>>>(device_vbo, device_cbo, device_ibo, ibosize, device_nbo, device_vto, originalPrimitives);
   cudaDeviceSynchronize();
 
   //------------------------------
@@ -658,25 +662,25 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float*
   //primitive assembly
   //------------------------------
   primitiveBlocks = ceil(((float)ibosize/3)/((float)tileSize));
-  primitiveAssemblyKernel<<<primitiveBlocks, tileSize>>>(device_vbo, vbosize, device_cbo, cbosize, device_ibo, ibosize, device_nbo, nbosize, primitives);
+  primitiveAssemblyKernel<<<primitiveBlocks, tileSize>>>(device_vbo, device_cbo, device_ibo, ibosize, device_nbo, device_vto, primitives);
   cudaDeviceSynchronize();
 
-  ////------------------------------
-  ////geometry shader
-  ////------------------------------
-  //geometryShaderKernel<<<primitiveBlocks, tileSize>>>(device_fnbo, primitives, (ibosize / 3));
-  //cudaDeviceSynchronize();
+  //------------------------------
+  //geometry shader, used for back face culling
+  //------------------------------
+  geometryShaderKernel<<<primitiveBlocks, tileSize>>>(originalPrimitives, (ibosize / 3), eye);
+  cudaDeviceSynchronize();
 
   //------------------------------
   //rasterization
   //------------------------------
-  rasterizationKernel<<<primitiveBlocks, tileSize>>>(primitives, ibosize/3, originalPrimitives, depthbuffer, resolution, eye);
+  rasterizationKernel<<<primitiveBlocks, tileSize>>>(primitives, ibosize/3, originalPrimitives, depthbuffer, resolution, eye, textureImage, textureWidth, textureHeight);
   cudaDeviceSynchronize();
 
   //------------------------------
   //fragment shader
   //------------------------------
-  fragmentShadeKernel<<<fullBlocksPerGrid, threadsPerBlock>>>(depthbuffer, framebuffer, resolution, cudaLights, numberOfLights);
+  fragmentShadeKernel<<<fullBlocksPerGrid, threadsPerBlock>>>(depthbuffer, framebuffer, resolution, cudaLights, numberOfLights, eye);
   cudaDeviceSynchronize();
 
   //------------------------------
@@ -702,5 +706,8 @@ void kernelCleanup(){
   //ADDED
   cudaFree(originalPrimitives);
   cudaFree(device_nbo);
+  cudaFree(cudaLights);
+  cudaFree(device_vto);
+  cudaFree(cudaTextureImage);
   //ADDED
 }

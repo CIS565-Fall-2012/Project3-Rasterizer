@@ -1,0 +1,120 @@
+# Max2Mtl Version 4.0 Mar 10th, 2001
+#
+newmtl RefRep.271
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.0
+illum 2
+map_Kd -s 1.0 -1.0 1.0 Dolphin.exe_Tue_Mar_22_01-12-23_2011_24.png
+#
+newmtl RefRep.279
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.0
+illum 2
+map_Kd -s 1.0 -1.0 1.0 Dolphin.exe_Tue_Mar_22_01-12-23_2011_28.png
+#
+newmtl RefRep.261
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.0
+illum 2
+map_Kd -s 1.0 -1.0 1.0 Dolphin.exe_Tue_Mar_22_01-12-23_2011_19.png
+#
+newmtl RefRep.263
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.0
+illum 2
+map_Kd -s 1.0 -1.0 1.0 Dolphin.exe_Tue_Mar_22_01-12-23_2011_20.png
+#
+newmtl RefRep.265
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.0
+illum 2
+map_Kd -s 1.0 -1.0 1.0 Dolphin.exe_Tue_Mar_22_01-12-23_2011_21.png
+#
+newmtl RefRep.267
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.0
+illum 2
+map_Kd -s 1.0 -1.0 1.0 Dolphin.exe_Tue_Mar_22_01-12-23_2011_22.png
+#
+newmtl RefRep.269
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.0
+illum 2
+map_Kd -s 1.0 -1.0 1.0 Dolphin.exe_Tue_Mar_22_01-12-23_2011_23.png
+#
+newmtl RefRep.283
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.0
+illum 2
+map_Kd -s 1.0 -1.0 1.0 Dolphin.exe_Tue_Mar_22_01-12-23_2011_30.png
+#
+newmtl RefRep.273
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.0
+illum 2
+map_Kd -s 1.0 -1.0 1.0 Dolphin.exe_Tue_Mar_22_01-12-23_2011_25.png
+#
+newmtl RefRep.275
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.0
+illum 2
+map_Kd -s 1.0 -1.0 1.0 Dolphin.exe_Tue_Mar_22_01-12-23_2011_26.png
+#
+newmtl RefRep.277
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.0
+illum 2
+map_Kd -s 1.0 -1.0 1.0 Dolphin.exe_Tue_Mar_22_01-12-23_2011_27.png
+#
+newmtl RefRep.281
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.0
+illum 2
+map_Kd -s 1.0 -1.0 1.0 Dolphin.exe_Tue_Mar_22_01-12-23_2011_29.png
+#
+newmtl RefRep.285
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.0
+illum 2
+map_Kd -s 1.0 -1.0 1.0 Dolphin.exe_Tue_Mar_22_01-12-23_2011_31.png
+#
+# EOF

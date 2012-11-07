@@ -31,6 +31,11 @@
 //ADDED
 #include "glm/gtc/matrix_transform.hpp"
 #include "Camera.h"
+
+#include "EasyBMP.h"
+#include "EasyBMP_BMP.h"
+#include "EasyBMP_DataStructures.h"
+#include "EasyBMP_VariousBMPutilities.h"
 //ADDED
 
 using namespace std;
@@ -66,6 +71,10 @@ Light *lights;
 unsigned int numberOfLights = 2;
 float *nbo;
 int nbosize;
+float *vto;
+int vtosize;
+unsigned char *textureImage;
+int textureImageWidth, textureImageHeight;
 //ADDED
 float* vbo;
 int vbosize;
@@ -135,5 +144,7 @@ void cleanupCuda();
 void deletePBO(GLuint* pbo);
 void deleteTexture(GLuint* tex);
 void shut_down(int return_code);
+
+void initializeTextureData(std::string s);
 
 #endif

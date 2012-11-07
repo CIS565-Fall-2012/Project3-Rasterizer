@@ -16,6 +16,10 @@
     <ClInclude Include="..\..\src\Camera.h" />
     <ClInclude Include="..\..\src\matrix.h" />
     <ClInclude Include="..\..\src\Light.h" />
+    <ClInclude Include="..\..\src\EasyBMP.h" />
+    <ClInclude Include="..\..\src\EasyBMP_BMP.h" />
+    <ClInclude Include="..\..\src\EasyBMP_DataStructures.h" />
+    <ClInclude Include="..\..\src\EasyBMP_VariousBMPutilities.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\glslUtility.cpp" />
@@ -28,6 +32,7 @@
       <Filter>ObjCore</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Camera.cpp" />
+    <ClCompile Include="..\..\src\EasyBMP.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="..\..\src\rasterizeKernels.cu" />

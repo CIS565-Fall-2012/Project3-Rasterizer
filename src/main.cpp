@@ -27,9 +27,18 @@ int main(int argc, char** argv){
 
   bool loadedScene = false;
   glm::mat4 transform = glm::mat4(1);
-  //transform = glm::scale(transform, glm::vec3(1.5f, 1.5f, 1.5f));
-  //transform = glm::scale(transform, glm::vec3(2.5f, 2.5f, 2.5f));
+  //Bovine
   transform = glm::scale(transform, glm::vec3(5, 5, 5));
+  //Thor
+  //transform = glm::scale(transform, glm::vec3(0.01f, 0.01f, 0.01f));
+  //Bumble bee
+  //transform = glm::scale(transform, glm::vec3(0.03f, 0.03f, 0.03f));
+  //Tank
+  //transform = glm::scale(transform, glm::vec3(0.00005f, 0.00005f, 0.00005f));
+  //VEH
+  //transform = glm::scale(transform, glm::vec3(0.005f, 0.005f, 0.005f));
+  //Teddy Bear
+  //transform = glm::scale(transform, glm::vec3(1, 1, 1);
 
   for(int i=1; i<argc; i++){
     string header; string data;
@@ -45,6 +54,11 @@ int main(int argc, char** argv){
       loadedScene = true;
 	  ++numberOfMeshes;
     }
+
+	else if(strcmp(header.c_str(), "texture") == 0)
+	{
+		initializeTextureData(data);
+	}
   }
 
   /*
@@ -70,7 +84,34 @@ int main(int argc, char** argv){
     return 0;
   }
 
+  vto = mesh->getVTO();
+  vtosize = mesh->getVTOsize();
 
+  //Attempt 2
+  //vector<glm::vec4>* texture = mesh->getTextureCoords();
+  //ibo = mesh->getIBO();
+  //ibosize = mesh->getIBOsize();
+  //vtosize = 2 * ibosize;
+  //vto = new float[vtosize];
+  //char c;
+  //for(unsigned int i = 0; i < ibosize; ++i)
+  //{
+	 // /*vto[2 * i] = texture[0][ibo[i]].x;
+	 // vto[2 * i + 1] = texture[0][ibo[i]].y;*/
+	 // std::cout << ibo[i] << "\n";
+	 // system("pause");
+  //}
+
+  //Attempt 1
+  //vector<glm::vec4>* texture = mesh->getTextureCoords();
+  //vtosize = (int)(2 * texture->size());
+  //vto = new float[vtosize];
+  //for(unsigned int i = 0; i < texture->size(); ++i)
+  //{
+	 // vto[2 * i] = texture[0][i].x;
+	 // vto[2 * i + 1] = texture[0][i].y;
+	 // //std::cout << texture[0][i].x << "\t" << texture[0][i].y << "\t" << texture[0][i].z << "\n";
+  //}
 
   frame = 0;
   seconds = time (NULL);
@@ -124,6 +165,29 @@ int main(int argc, char** argv){
   return 0;
 }
 
+void initializeTextureData(std::string s)
+{
+	BMP image1;
+	if(image1.ReadFromFile(s.c_str()))
+	{
+		textureImageWidth = image1.TellWidth();
+		textureImageHeight = image1.TellHeight();
+		textureImage = new unsigned char[textureImageWidth * textureImageHeight * 3];
+		for(int j = 0; j < textureImageHeight; ++j)
+		{
+			for(int i = 0; i < textureImageWidth; ++i)
+			{
+				RGBApixel p = image1.GetPixel(i, j);
+				textureImage[3 * (i + j * textureImageWidth)] = p.Red;
+				textureImage[3 * (i + j * textureImageWidth) + 1] = p.Green;
+				textureImage[3 * (i + j * textureImageWidth) + 2] = p.Blue;
+			}
+		}
+	}
+	std::cout << "Texture Data Initialization Done!\n";
+}
+
+
 //-------------------------------
 //---------RUNTIME STUFF---------
 //-------------------------------
@@ -139,11 +203,15 @@ void runCuda(){
   /*float newcbo[] = {0.0, 1.0, 0.0, 
                     0.0, 0.0, 1.0, 
                     1.0, 0.0, 0.0};*/
-  float newcbo[] = {0.60f, 0.60f, 0.60f, 
+  /*float newcbo[] = {0.60f, 0.60f, 0.60f, 
                     0.60f, 0.60f, 0.60f, 
                     0.60f, 0.60f, 0.60f};
   cbo = newcbo;
-  cbosize = 9;
+  cbosize = 9;*/
+
+  mesh->setColor(glm::vec3(0.8f, 0.8f, 0.8f));
+  cbo = mesh->getCBO();
+  cbosize = mesh->getCBOsize();
 
   ibo = mesh->getIBO();
   ibosize = mesh->getIBOsize();
@@ -152,78 +220,78 @@ void runCuda(){
   nbosize = mesh->getNBOsize();
 
 
+  //Computing the model-view-projection matrix right here
 
-  ////Computing the model-view-projection matrix right here
-  //currentNear = -fabs(currentNear);
-  //currentFar = -fabs(currentFar);
-  //float range = 1.0f * tan((PI / 180.0f) * (fovy / 2.0f)) * (-currentNear);
-  //currentLeft = -range * aspectRatio;
-  //currentRight = range * aspectRatio;
-  //currentBottom = -range;
-  //currentTop = range;
+  theCamera.getProjection(&fovy, &aspectRatio, &currentNear, &currentFar);
+  currentNear = -currentNear;
+  currentFar = -currentFar;
+  float range = 1.0f * tan((PI / 180.0f) * (fovy / 2.0f)) * (-currentNear);
+  currentLeft = -range * aspectRatio;
+  currentRight = range * aspectRatio;
+  currentBottom = -range;
+  currentTop = range;
 
-
-  ////View Matrix
-  //glm::mat4 viewMatrix;
-  //glm::vec3 x = glm::cross(currentForward, currentUp);
-  //currentUp = glm::cross(x, currentForward);
-
-  ////Making the forward direction as (0, 0, -1)
-  //viewMatrix[0][0] = x.x;
-  //viewMatrix[1][0] = x.y;
-  //viewMatrix[2][0] = x.z;
-  //viewMatrix[0][1] = currentUp.x;
-  //viewMatrix[1][1] = currentUp.y;
-  //viewMatrix[2][1] = currentUp.z;
-  //viewMatrix[0][2] = -currentForward.x;
-  //viewMatrix[1][2] = -currentForward.y;
-  //viewMatrix[2][2] = -currentForward.z;
-
-  //viewMatrix[0][3] = 0.0f;
-  //viewMatrix[1][3] = 0.0f;
-  //viewMatrix[2][3] = 0.0f;
-  //viewMatrix[3][3] = 1.0f;
-
-  //viewMatrix[3][0] = 0.0f;
-  //viewMatrix[3][1] = 0.0f;
-  //viewMatrix[3][2] = 0.0f;
-  //
-  ////Translating eye to (0, 0, 0)
-  //viewMatrix = glm::translate(viewMatrix, -currentEye);
-
-  ////Perspective Projection Matrix
-  //glm::mat4 projectionMatrix;
-  //projectionMatrix[0][0] = 2.0f * currentNear / (currentRight - currentLeft);
-  //projectionMatrix[0][1] = 0.0;
-  //projectionMatrix[0][2] = -1.0f * (currentRight + currentLeft) / (currentRight - currentLeft);
-  //projectionMatrix[0][3] = 0.0f;
-
-  //projectionMatrix[1][0] = 0.0f;
-  //projectionMatrix[1][1] = 2.0f * currentNear / (currentTop - currentBottom);
-  //projectionMatrix[1][2] = -1.0f * (currentTop + currentBottom) / (currentTop - currentBottom);
-  //projectionMatrix[1][3] = 0.0f;
-
-  //projectionMatrix[2][0] = 0.0f;
-  //projectionMatrix[2][1] = 0.0f;
-  //projectionMatrix[2][2] = (currentFar + currentNear) / (currentFar - currentNear);
-  //projectionMatrix[2][3] = -2.0f * currentFar * currentNear / (currentFar - currentNear);
-
-  //projectionMatrix[3][0] = 0.0f;
-  //projectionMatrix[3][1] = 0.0f;
-  //projectionMatrix[3][2] = 1.0f;
-  //projectionMatrix[3][3] = 0.0f;
-
-  ////Computing model-view-projection matrix
-  //glm::mat4 modelViewProjection = projectionMatrix * viewMatrix * mesh->getModelMatrix();
+  currentUp = theCamera.getUp();
+  glm::vec3 cameraRight = theCamera.getRight();
+  currentEye = theCamera.getPosition();
+  currentForward = glm::cross(currentUp, cameraRight);
 
 
+  //View Matrix
+  glm::mat4 viewMatrix;
+  glm::vec3 x = glm::cross(currentForward, currentUp);
+  currentUp = glm::cross(x, currentForward);
 
-  //Using glm stuff
-  /*glm::mat4 projection = glm::perspective(fovy, aspectRatio, currentNear, currentFar);
-  glm::mat4 view = glm::lookAt(currentEye, glm::vec3(0, 0, 0), currentUp);
-  glm::mat4 modelViewProjection = projection * view * mesh->getModelMatrix();*/
+  //Making the forward direction as (0, 0, -1)
+  viewMatrix[0][0] = x.x;
+  viewMatrix[1][0] = x.y;
+  viewMatrix[2][0] = x.z;
+  viewMatrix[0][1] = currentUp.x;
+  viewMatrix[1][1] = currentUp.y;
+  viewMatrix[2][1] = currentUp.z;
+  viewMatrix[0][2] = -currentForward.x;
+  viewMatrix[1][2] = -currentForward.y;
+  viewMatrix[2][2] = -currentForward.z;
 
-  float fov, aspect, zNear, zFar;
+  viewMatrix[0][3] = 0.0f;
+  viewMatrix[1][3] = 0.0f;
+  viewMatrix[2][3] = 0.0f;
+  viewMatrix[3][3] = 1.0f;
+
+  viewMatrix[3][0] = 0.0f;
+  viewMatrix[3][1] = 0.0f;
+  viewMatrix[3][2] = 0.0f;
+  
+  //Translating eye to (0, 0, 0)
+  viewMatrix = glm::translate(viewMatrix, -currentEye);
+
+  //Perspective Projection Matrix
+  glm::mat4 projectionMatrix;
+  projectionMatrix[0][0] = 2.0f * currentNear / (currentRight - currentLeft);
+  projectionMatrix[0][1] = 0.0;
+  projectionMatrix[0][2] = -1.0f * (currentRight + currentLeft) / (currentRight - currentLeft);
+  projectionMatrix[0][3] = 0.0f;
+
+  projectionMatrix[1][0] = 0.0f;
+  projectionMatrix[1][1] = 2.0f * currentNear / (currentTop - currentBottom);
+  projectionMatrix[1][2] = -1.0f * (currentTop + currentBottom) / (currentTop - currentBottom);
+  projectionMatrix[1][3] = 0.0f;
+
+  projectionMatrix[2][0] = 0.0f;
+  projectionMatrix[2][1] = 0.0f;
+  projectionMatrix[2][2] = (currentFar + currentNear) / (currentFar - currentNear);
+  projectionMatrix[2][3] = -1.0f * currentFar * currentNear / (currentFar - currentNear);
+
+  projectionMatrix[3][0] = 0.0f;
+  projectionMatrix[3][1] = 0.0f;
+  projectionMatrix[3][2] = 1.0f;
+  projectionMatrix[3][3] = 0.0f;
+
+  //Computing model-view-projection matrix
+  glm::mat4 modelViewProjection = projectionMatrix * viewMatrix * mesh->getModelMatrix();
+
+  //Not Using glm
+  /*float fov, aspect, zNear, zFar;
   theCamera.getProjection(&fov, &aspect, &zNear, &zFar);
   currentUp = theCamera.getUp();
   glm::vec3 cameraRight = theCamera.getRight();
@@ -232,7 +300,7 @@ void runCuda(){
   glm::vec3 cameraForward = glm::cross(currentUp, cameraRight);
   glm::mat4 view = glm::lookAt(currentEye, currentEye + cameraForward, currentUp);
   glm::mat4 projection = glm::perspective(fov, aspect, zNear, zFar);
-  glm::mat4 modelViewProjection = projection * view * mesh->getModelMatrix();
+  glm::mat4 modelViewProjection = projection * view * mesh->getModelMatrix();*/
 
   //Converting to cudaMat4 before sending to GPU
   cudaMat4 cudaModelViewProjection = utilityCore::glmMat4ToCudaMat4(modelViewProjection);
@@ -249,7 +317,8 @@ void runCuda(){
   std::cout << "\n";*/
 
   cudaGLMapBufferObject((void**)&dptr, pbo);
-  cudaRasterizeCore(dptr, glm::vec2(width, height), frame, vbo, vbosize, cbo, cbosize, ibo, ibosize, nbo, nbosize, cudaModelViewProjection, currentEye, lights, numberOfLights);
+  cudaRasterizeCore(dptr, glm::vec2(width, height), frame, vbo, vbosize, cbo, cbosize, ibo, ibosize, nbo, nbosize, vto, vtosize, cudaModelViewProjection,
+	  currentEye, lights, numberOfLights, textureImage, textureImageWidth, textureImageHeight);
   cudaGLUnmapBufferObject(pbo);
 
   vbo = NULL;
@@ -441,10 +510,10 @@ void runCuda(){
   	    // Zoom
   	   if (theModifierState & GLUT_ACTIVE_ALT) // camera move
          {
-              if (moveLeftRight && deltaX > 0) theCamera.moveLeft(deltaX);
-              else if (moveLeftRight && deltaX < 0) theCamera.moveRight(-deltaX);
-              else if (moveUpDown && deltaY > 0) theCamera.moveUp(deltaY);
-              else if (moveUpDown && deltaY < 0) theCamera.moveDown(-deltaY);
+              if (moveLeftRight && deltaX > 0) theCamera.moveLeft(-deltaX);
+              else if (moveLeftRight && deltaX < 0) theCamera.moveRight(deltaX);
+              else if (moveUpDown && deltaY > 0) theCamera.moveUp(-deltaY);
+              else if (moveUpDown && deltaY < 0) theCamera.moveDown(deltaY);
          }
          else
          {
@@ -453,16 +522,6 @@ void runCuda(){
          }
   	   break;
      case GLUT_RIGHT_BUTTON:
-  	   // Selection of vertices
-  	   /*if (mouseDown)
-  	   {
-  		   theCamera.screenToWorld(x, y, mouseStartPos);
-  	   }
-  	   else
-  	   {
-  		   theCamera.screenToWorld(x, y, mouseEndPos);
-  		   cloth.SelectVertices(mouseStartPos, mouseEndPos);
-  	   }*/
   	   break;
      }
   

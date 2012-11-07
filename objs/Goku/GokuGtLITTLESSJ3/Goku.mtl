@@ -1,0 +1,572 @@
+# Max2Mtl Version 4.0 Mar 10th, 2001
+#
+newmtl RefRep.183
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.184
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.186
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.187
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.188
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.189
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.190
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.191
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.192
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.193
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.194
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.195
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.196
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.198
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.200
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.201
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.202
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.204
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.205
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.206
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.207
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.208
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.209
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.210
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.213
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.214
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.215
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.217
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.218
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.219
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.221
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.222
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.223
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.224
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.225
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.226
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.227
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.228
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.229
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.230
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.231
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.232
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.233
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.234
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.235
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.236
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.237
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.238
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.239
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.240
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.241
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.242
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.1
+illum 2
+#
+newmtl RefRep.280
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.0
+illum 2
+map_Kd -s 1.0 -1.0 1.0 Dolphin.exe_Fri_Mar_25_02-46-10_2011_19.png
+#
+newmtl RefRep.282
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.0
+illum 2
+map_Kd -s 1.0 -1.0 1.0 Dolphin.exe_Fri_Mar_25_02-46-10_2011_20.png
+#
+newmtl RefRep.284
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.0
+illum 2
+map_Kd -s 1.0 -1.0 1.0 Dolphin.exe_Fri_Mar_25_02-46-10_2011_21.png
+#
+newmtl RefRep.286
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.0
+illum 2
+map_Kd -s 1.0 -1.0 1.0 Dolphin.exe_Fri_Mar_25_02-46-10_2011_22.png
+#
+newmtl RefRep.288
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.0
+illum 2
+map_Kd -s 1.0 -1.0 1.0 Dolphin.exe_Fri_Mar_25_02-46-10_2011_23.png
+#
+newmtl RefRep.290
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.0
+illum 2
+map_Kd -s 1.0 -1.0 1.0 Dolphin.exe_Fri_Mar_25_02-46-10_2011_24.png
+#
+newmtl RefRep.292
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.0
+illum 2
+map_Kd -s 1.0 -1.0 1.0 Dolphin.exe_Fri_Mar_25_02-46-10_2011_25.png
+#
+newmtl RefRep.294
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.0
+illum 2
+map_Kd -s 1.0 -1.0 1.0 Dolphin.exe_Fri_Mar_25_02-46-10_2011_26.png
+#
+newmtl RefRep.296
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.0
+illum 2
+map_Kd -s 1.0 -1.0 1.0 Dolphin.exe_Fri_Mar_25_02-46-10_2011_27.png
+#
+newmtl RefRep.298
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.0
+illum 2
+map_Kd -s 1.0 -1.0 1.0 Dolphin.exe_Fri_Mar_25_02-46-10_2011_28.png
+#
+newmtl RefRep.300
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.0
+illum 2
+map_Kd -s 1.0 -1.0 1.0 Dolphin.exe_Fri_Mar_25_02-46-10_2011_29.png
+#
+newmtl RefRep.302
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.0
+illum 2
+map_Kd -s 1.0 -1.0 1.0 Dolphin.exe_Fri_Mar_25_02-46-10_2011_30.png
+#
+newmtl RefRep.304
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.0
+illum 2
+map_Kd -s 1.0 -1.0 1.0 Dolphin.exe_Fri_Mar_25_02-46-10_2011_31.png
+#
+newmtl RefRep.306
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.0
+illum 2
+map_Kd -s 1.0 -1.0 1.0 Dolphin.exe_Fri_Mar_25_02-46-10_2011_32.png
+#
+newmtl RefRep.308
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.0
+illum 2
+map_Kd -s 1.0 -1.0 1.0 Dolphin.exe_Fri_Mar_25_02-46-10_2011_33.png
+#
+newmtl RefRep.310
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.0
+illum 2
+map_Kd -s 1.0 -1.0 1.0 Dolphin.exe_Fri_Mar_25_02-46-10_2011_34.png
+#
+newmtl RefRep.312
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.0
+illum 2
+map_Kd -s 1.0 -1.0 1.0 Dolphin.exe_Fri_Mar_25_02-46-10_2011_35.png
+#
+# EOF

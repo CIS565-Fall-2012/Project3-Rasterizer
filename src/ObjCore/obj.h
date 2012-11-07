@@ -29,6 +29,10 @@ private:
 	float* nbo;
 	float* cbo;
 	int* ibo;
+	//ADDED
+	float *vto;
+	int vtosize;
+	//ADDED
 	float* boundingbox;
 	float top;
 	glm::vec3 defaultColor;
@@ -73,6 +77,10 @@ public:
 	int getNBOsize();
 	int getIBOsize();
 	int getCBOsize();
+	//ADDED
+	float *getVTO();
+	int getVTOsize();
+	//ADDED
     vector<glm::vec4>* getPoints();
 	vector<vector<int> >* getFaces(); 
 	vector<vector<int> >* getFaceNormals(); 
