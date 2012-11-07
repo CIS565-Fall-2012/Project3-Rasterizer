@@ -16,12 +16,16 @@ struct triangle {
   glm::vec3 c0;
   glm::vec3 c1;
   glm::vec3 c2;
+  glm::vec3 n1;
+  glm::vec3 n2;
+  glm::vec3 n0;
 };
 
 struct fragment{
   glm::vec3 color;
   glm::vec3 normal;
   glm::vec3 position;
+  int lock;
 };
 
 //Multiplies a cudaMat4 matrix and a vec4
@@ -32,6 +36,7 @@ __host__ __device__ glm::vec3 multiplyMV(cudaMat4 m, glm::vec4 v){
   r.z = (m.z.x*v.x)+(m.z.y*v.y)+(m.z.z*v.z)+(m.z.w*v.w);
   return r;
 }
+
 
 //LOOK: finds the axis aligned bounding box for a given triangle
 __host__ __device__ void getAABBForTriangle(triangle tri, glm::vec3& minpoint, glm::vec3& maxpoint){
