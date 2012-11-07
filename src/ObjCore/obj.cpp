@@ -9,7 +9,7 @@
 
 using namespace std;
 
-obj::obj(){
+obj::obj(){					// constructor
 	vbosize = 0;
 	nbosize = 0;
 	cbosize = 0;
@@ -22,7 +22,7 @@ obj::obj(){
 	
 }
 
-obj::~obj(){
+obj::~obj(){				//destructor
 	/*delete vbo;
 	delete nbo;
 	delete cbo;
@@ -37,7 +37,7 @@ obj::~obj(){
 
 void obj::buildVBOs(){
 	recenter();
-	vector<float> VBOvec;
+	vector<float> VBOvec;   // vertex buffer object
 	vector<float> NBOvec;
 	vector<int> IBOvec;
 	int index = 0;

@@ -46,6 +46,8 @@ uchar4 *dptr;
 obj* mesh;
 
 float* vbo;
+float* nbo;
+int nbosize;
 int vbosize;
 float* cbo;
 int cbosize;

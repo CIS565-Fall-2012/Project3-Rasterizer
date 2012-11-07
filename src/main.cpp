@@ -19,6 +19,7 @@ int main(int argc, char** argv){
       mesh = new obj();
       objLoader* loader = new objLoader(data, mesh);
       mesh->buildVBOs();
+
       delete loader;
       loadedScene = true;
     }
@@ -90,6 +91,17 @@ void runCuda(){
   vbo = mesh->getVBO();
   vbosize = mesh->getVBOsize();
 
+  nbo = mesh->getNBO();
+  nbosize= mesh->getNBOsize();
+  
+    /*for( int i=0; i<52238;i++)
+	  {
+		printf("vbo %i= %f  \n", i,vbo[i]);
+	  }
+	printf("nbosize %i",nbosize);
+	int y;
+	cin>>y;*/
+
   float newcbo[] = {0.0, 1.0, 0.0, 
                     0.0, 0.0, 1.0, 
                     1.0, 0.0, 0.0};
@@ -99,17 +111,23 @@ void runCuda(){
   ibo = mesh->getIBO();
   ibosize = mesh->getIBOsize();
 
+
+  glm::vec3 lightcol=glm::vec3(1.0,1.0,1.0);
+  glm::vec3 lightpos=glm::vec3(0,10.0,0.0);
+
   cudaGLMapBufferObject((void**)&dptr, pbo);
-  cudaRasterizeCore(dptr, glm::vec2(width, height), frame, vbo, vbosize, cbo, cbosize, ibo, ibosize);
+  cudaRasterizeCore(dptr, glm::vec2(width, height),frame, vbo,  vbosize,  cbo,  cbosize,  ibo,  ibosize, nbosize,nbo,lightpos,lightcol);
   cudaGLUnmapBufferObject(pbo);
 
   vbo = NULL;
   cbo = NULL;
   ibo = NULL;
+  nbo = NULL;
 
   frame++;
   fpstracker++;
-
+  int x;
+ // cin>>x;
 }
 
 #ifdef __APPLE__
