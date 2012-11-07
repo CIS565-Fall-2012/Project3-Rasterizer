@@ -2,6 +2,7 @@
 //This file is part of OBJCORE, Coyright (c) 2012 Yining Karl Li
 
 #include "obj.h"
+#include "../utilities.h"
 #include <iostream>
 #include <limits>
 
@@ -10,6 +11,9 @@
 using namespace std;
 
 obj::obj(){
+	pos = glm::vec3(0,0,0);
+	rot = glm::vec3(0,0,0);
+	scale = glm::vec3(1,1,1);
 	vbosize = 0;
 	nbosize = 0;
 	cbosize = 0;
@@ -17,6 +21,7 @@ obj::obj(){
 	top = 0;
 	defaultColor = glm::vec3(0,0,0);
 	boundingbox = new float[32];
+	bounds = new float[6];
 	maxminSet = false;
 	xmax=0; xmin=0; ymax=0; ymin=0; zmax=0; zmin=0; 
 	
@@ -28,6 +33,7 @@ obj::~obj(){
 	delete cbo;
 	delete ibo;*/
 	delete boundingbox;
+	delete bounds;
 	for(int i=0; i<faceboxes.size(); i++){
 		delete faceboxes[i];
 	}
@@ -45,6 +51,8 @@ void obj::buildVBOs(){
 	if(faces.size()!=facenormals.size()){
 		genNormals = true;
 	}
+	transform = getTransform();
+	glm::mat4 invTransform = transform._inverse(); // This return the transpose of the inverse for the system that is used in the code by me
 	for(int k = 0; k<faces.size(); k++){
 
 		if(isConvex(faces[k])==true){
@@ -52,19 +60,27 @@ void obj::buildVBOs(){
 			vector<int> face = faces[k];
  
 			glm::vec4 p0 = points[face[0]];
-			
+			p0 = transform*p0;
 			for(int i=2; i<face.size(); i++){
 				glm::vec4 p1 = points[face[i-1]];
+				p1 = transform*p1;
 				glm::vec4 p2 = points[face[i]];
+				p2 = transform*p2;
 				VBOvec.push_back(p0[0]) ; VBOvec.push_back(p0[1]); VBOvec.push_back(p0[2]); //VBOvec.push_back(1.0f);
 				VBOvec.push_back(p1[0]); VBOvec.push_back(p1[1]); VBOvec.push_back(p1[2]); //VBOvec.push_back(1.0f);
 				VBOvec.push_back(p2[0]); VBOvec.push_back(p2[1]); VBOvec.push_back(p2[2]); //VBOvec.push_back(1.0f);
 
 				if(genNormals==false){
 					vector<int> facenormal = facenormals[k];
-					NBOvec.push_back(normals[facenormal[0]][0]); NBOvec.push_back(normals[facenormal[0]][1]); NBOvec.push_back(normals[facenormal[0]][2]); //NBOvec.push_back(0.0f);
-					NBOvec.push_back(normals[facenormal[i-1]][0]); NBOvec.push_back(normals[facenormal[i-1]][1]); NBOvec.push_back(normals[facenormal[i-1]][2]); //NBOvec.push_back(0.0f);
-					NBOvec.push_back(normals[facenormal[i]][0]); NBOvec.push_back(normals[facenormal[i]][1]); NBOvec.push_back(normals[facenormal[i]][2]); //NBOvec.push_back(0.0f);
+					glm::vec4 n0 = normals[facenormal[0]];
+					n0 = transform*n0;
+					glm::vec4 n1 = normals[facenormal[i-1]];
+					n1 = transform*n1;
+					glm::vec4 n2 = normals[facenormal[i]];
+					n2 = transform*n2;
+					NBOvec.push_back(n0[0]); NBOvec.push_back(n0[1]); NBOvec.push_back(n0[2]); //NBOvec.push_back(0.0f);
+					NBOvec.push_back(n1[0]); NBOvec.push_back(n1[1]); NBOvec.push_back(n1[2]); //NBOvec.push_back(0.0f);
+					NBOvec.push_back(n2[0]); NBOvec.push_back(n2[1]); NBOvec.push_back(n2[2]); //NBOvec.push_back(0.0f);
 				}else{
                     
 					glm::vec3 a = glm::vec3(p1[0], p1[1], p1[2]) - glm::vec3(p0[0], p0[1], p0[2]);
@@ -200,7 +216,7 @@ void obj::addFaceTexture(vector<int> facet){
 }
 
 void obj::addNormal(glm::vec3 normal){
-	normals.push_back(glm::vec4(normal[0], normal[1], normal[2], 1));
+	normals.push_back(glm::vec4(normal[0], normal[1], normal[2], 0));
 }
 
 void obj::addTextureCoord(glm::vec3 texcoord){
@@ -209,6 +225,17 @@ void obj::addTextureCoord(glm::vec3 texcoord){
 
 float* obj::getBoundingBox(){
 	return boundingbox;
+}
+
+float* obj::getBounds(){
+	bounds[0] = boundingbox[16];
+	bounds[1] = boundingbox[17];
+	bounds[2] = boundingbox[18];
+
+	bounds[3] = boundingbox[8];
+	bounds[4] = boundingbox[9];
+	bounds[5] = boundingbox[10];
+	return bounds;
 }
 
 float obj::getTop(){
@@ -329,3 +356,20 @@ int obj::getCBOsize(){
 	return cbosize;
 }
 
+glm::mat4 obj::getTransform()
+{
+	transform = utilityCore::buildTransformationMatrix(pos, rot, scale);
+	return transform;
+}
+
+cudaMat4 obj::getTransformCuda()
+{
+	return utilityCore::glmMat4ToCudaMat4(getTransform());
+}
+
+void obj::setTransforms(glm::vec3 v_pos, glm::vec3 v_rot, glm::vec3 v_scale)
+{
+	pos = v_pos;
+	rot = v_rot;
+	scale = v_scale;
+}

@@ -5,6 +5,7 @@
 #define OBJ
 
 #include "../glm/glm.hpp"
+#include "../cudaMat4.h"
 #include <string>
 #include <vector>
 
@@ -12,6 +13,10 @@ using namespace std;
 
 class obj{
 private:
+	glm::vec3 pos;
+	glm::vec3 rot;
+	glm::vec3 scale;
+
 	vector<glm::vec4> points;
 	vector<vector<int> > faces; 
 	vector<vector<int> > facenormals; 
@@ -28,10 +33,12 @@ private:
 	float* cbo;
 	int* ibo;
 	float* boundingbox;
+	float* bounds;
 	float top;
 	glm::vec3 defaultColor;
 	float xmax; float xmin; float ymax; float ymin; float zmax; float zmin; 
 	bool maxminSet;
+	glm::mat4 transform;
 public:
 	obj();
 	~obj();  
@@ -54,6 +61,7 @@ public:
 	//-------Get/Set Operations------
 	//-------------------------------
 	float* getBoundingBox();    //returns vbo-formatted bounding box
+	float* getBounds();
 	float getTop();
 	void setColor(glm::vec3);
 	glm::vec3 getColor();
@@ -72,6 +80,10 @@ public:
 	vector<glm::vec4>* getNormals();
 	vector<glm::vec4>* getTextureCoords();
     vector<float*>* getFaceBoxes();
+    glm::mat4 getTransform();
+	cudaMat4 getTransformCuda();
+
+	void setTransforms(glm::vec3 v_pos, glm::vec3 v_rot, glm::vec3 v_scale);
 };
 
 #endif

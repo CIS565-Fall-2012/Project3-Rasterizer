@@ -3,6 +3,10 @@
 
 #include "main.h"
 
+int theButtonState = 0;
+int theModifierState = 0;
+int lastX = 0, lastY = 0;
+
 //-------------------------------
 //-------------MAIN--------------
 //-------------------------------
@@ -18,6 +22,10 @@ int main(int argc, char** argv){
       //renderScene = new scene(data);
       mesh = new obj();
       objLoader* loader = new objLoader(data, mesh);
+	  glm::vec3 meshPos = glm::vec3(0,0,0);
+	  glm::vec3 meshRot = glm::vec3(0,-45,0);
+	  glm::vec3 meshScale = glm::vec3(1.5,1.5,1.5);
+	  mesh->setTransforms(meshPos, meshRot, meshScale);
       mesh->buildVBOs();
       delete loader;
       loadedScene = true;
@@ -28,6 +36,9 @@ int main(int argc, char** argv){
     cout << "Usage: mesh=[obj file]" << endl;
     return 0;
   }
+
+  // Get eye details
+  eye.SetBoundariesOfView(-1, 1, -1, 1, 20, 52);
 
   frame = 0;
   seconds = time (NULL);
@@ -71,7 +82,8 @@ int main(int argc, char** argv){
   #else
     glutDisplayFunc(display);
     glutKeyboardFunc(keyboard);
-
+	glutMouseFunc(onMouseCb);
+    glutMotionFunc(onMouseMotionCb);
     glutMainLoop();
   #endif
   kernelCleanup();
@@ -90,17 +102,34 @@ void runCuda(){
   vbo = mesh->getVBO();
   vbosize = mesh->getVBOsize();
 
-  float newcbo[] = {0.0, 1.0, 0.0, 
+  /*float newcbo[] = {0.0, 1.0, 0.0, 
                     0.0, 0.0, 1.0, 
-                    1.0, 0.0, 0.0};
+                    1.0, 0.0, 0.0};*/
+
+  float newcbo[] = {0.5, 0.5, 0.5, 
+                    0.5, 0.5, 0.5, 
+                    0.5, 0.5, 0.5};
   cbo = newcbo;
   cbosize = 9;
 
   ibo = mesh->getIBO();
   ibosize = mesh->getIBOsize();
 
+  nbo = mesh->getNBO();
+  nbosize = mesh->getNBOsize();
+  
+  glm::mat4 modelView = eye.TransformWorldToEye();
+  eye.TransformIntoPerspectiveView();
+  glm::mat4 perspective = eye.transformIntoPerspective;
+  cudaMat4 modelViewCudaMat = utilityCore::glmMat4ToCudaMat4NoTranspose(modelView);
+  cudaMat4 perspectiveCudaMat = utilityCore::glmMat4ToCudaMat4NoTranspose(perspective);
+
+  glm::mat4 finalTransform = eye.GetTransformWorldToPerspective();
+  cudaMat4 finalTransformCudaMat = utilityCore::glmMat4ToCudaMat4NoTranspose(finalTransform);
+
   cudaGLMapBufferObject((void**)&dptr, pbo);
-  cudaRasterizeCore(dptr, glm::vec2(width, height), frame, vbo, vbosize, cbo, cbosize, ibo, ibosize);
+  cudaRasterizeCore(dptr, glm::vec2(width, height), frame, vbo, vbosize, cbo, cbosize, 
+	                ibo, ibosize, nbo, nbosize, eye, finalTransformCudaMat, modelViewCudaMat, perspectiveCudaMat);
   cudaGLUnmapBufferObject(pbo);
 
   vbo = NULL;
@@ -109,6 +138,9 @@ void runCuda(){
 
   frame++;
   fpstracker++;
+
+  /*int temp;
+  std::cin >> temp;*/
 
 }
 
@@ -150,10 +182,11 @@ void runCuda(){
   void display(){
     runCuda();
 	time_t seconds2 = time (NULL);
-
-    if(seconds2-seconds >= 1){
+	if(seconds2-seconds >= 1){
 
       fps = fpstracker/(seconds2-seconds);
+	  printf("Difference:%f, FPS: %f\n", ((float)seconds2-(float)seconds), (float)fpstracker/(float)(seconds2-seconds));
+    
       fpstracker = 0;
       seconds = seconds2;
 
@@ -164,7 +197,8 @@ void runCuda(){
 
     glBindBuffer( GL_PIXEL_UNPACK_BUFFER, pbo);
     glBindTexture(GL_TEXTURE_2D, displayImage);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, 
+    glBindTexture(GL_TEXTURE_2D, displayImage);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, 
         GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
     glClear(GL_COLOR_BUFFER_BIT);   
@@ -351,4 +385,52 @@ void shut_down(int return_code){
   glfwTerminate();
   #endif
   exit(return_code);
+}
+
+void onMouseCb(int button, int state, int x, int y)
+{
+   theButtonState = button;
+   theModifierState = glutGetModifiers();
+   lastX = x;
+   lastY = y;
+}
+
+void onMouseMotionCb(int x, int y)
+{
+   int deltaX = lastX - x;
+   int deltaY = lastY - y;
+   bool moveLeftRight = abs(deltaX) > abs(deltaY);
+   bool moveUpDown = !moveLeftRight;
+
+   switch(theButtonState)
+   {
+   case GLUT_LEFT_BUTTON:
+	    // Move Camera
+		if (theModifierState & GLUT_ACTIVE_ALT)
+		{
+			
+			if (deltaY > 0)
+			{
+				if (eye.pos.z < 100)
+					eye.pos.z += 5;
+				
+			}
+			else if (deltaY < 0)
+			{
+				if (eye.pos.z > 10)
+					eye.pos.z -= 5;
+			}
+		}
+		else
+		{
+			if (deltaX > 0) eye.rot.y -= 5;
+			else if (deltaX < 0) eye.rot.y += 5;
+			else if (deltaY > 0) eye.rot.x += 5;
+			else if (deltaY < 0) eye.rot.x -= 5;
+		}
+		break;
+   }
+   lastX = x;
+   lastY = y;
+   glutPostRedisplay();
 }

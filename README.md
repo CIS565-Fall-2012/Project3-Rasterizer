@@ -1,10 +1,47 @@
--------------------------------------------------------------------------------
+﻿-------------------------------------------------------------------------------
 CIS565: Project 3: CUDA Rasterizer
 -------------------------------------------------------------------------------
 Fall 2012
 -------------------------------------------------------------------------------
 Due Monday 11/05/2012
 -------------------------------------------------------------------------------
+Blog: http://cudarasterizer.blogspot.com/
+
+The results below are on the NVidia 650M card
+Implementation Details:
+The following have been implemented:
+* Back Face Culling
+* Stencil buffer
+* Z-Buffer visual
+* Anti-alias
+* Camera interaction using mouse
+* Correct color interpretetion between points
+* Interpolation of normals (Geometry Shader, but done as part of the rasterizer itself)
+* Specular and diffuse surfaces
+* Multiple directional lights
+
+** Back Face Culling
+This is implemented as part of the rasterizer, which ignores the faces facing away from the viewer using the normal data. For flat shading of a scaled up, rotated version of the cow I get the same fps with or without back face culling. Just over 2700 triangles were culled in this view.
+
+** Stencil Buffer
+This too did not speed up or slow down the rasterizer. The fragment shader works on lesser number of fragment; only thise fragments that are in the visible part of the stencil are shaded.
+** Z-Buffer Visual
+I got t
+he minimum and maximum values of the depth and shaded from 0.15 to 0.85 depending on depth from camera with 0.15 being the closest.
+
+** Anti-alias
+I performed antialiasing on each and every primitive. This worked fine for a single primitive, but on a model, I get lines at the junctions where the primitives meet. This was done in the vertex shader itself. The image is anti-aliased but artifacts are disturbing. This runs at 12 fps same as the normal case.
+So I performed anti aliasing using higher resolution (4 times the normal resolution) in the rasterizer and performed shading on the higher resolution before writing to the frame buffer. I get a 0.5 to 1 fps with this method instead of 12 fps.
+
+** Camera interaction using mouse
+Use the left mouse button and drag to rotate the camera. Press down the "ALT" key and the left mouse down and then mouse the mouse for zooming in and out.
+
+** Color interpretation did not slow down the rasterizer
+
+** Shading the surfaces as well as lights also did not have much impact on the speed
+
+
+All the options can be enabled by setting bool values in the cuda Rasterizer core function.
 
 -------------------------------------------------------------------------------
 NOTE:
@@ -13,7 +50,7 @@ This project requires an NVIDIA graphics card with CUDA capability! Any card wit
 
 -------------------------------------------------------------------------------
 INTRODUCTION:
--------------------------------------------------------------------------------
+--------------zbuffer-----------------------------------------------------------------
 In this project, you will implement a simplified CUDA based implementation of a standard rasterized graphics pipeline, similar to the OpenGL pipeline. In this project, you will implement vertex shading, primitive assembly, perspective transformation, rasterization, fragment shading, and write the resulting fragments to a framebuffer. More information about the rasterized graphics pipeline can be found in the 10/15 class slides and in your notes from CIS560.
 
 The basecode provided includes an OBJ loader and much of the mundane I/O and bookkeeping code. The basecode also includes some functions that you may find useful, described below. The core rasterization pipeline is left for you to implement.
@@ -71,7 +108,7 @@ IMPORTANT: For each of these stages implemented, you must also add a section to 
 
 * Correct color interpretation between points on a primitive
 * Texture mapping WITH texture filtering and perspective correct texture coordinates
-* Support for additional primitices. Each one of these can count as HALF of a feature.
+* Support for additional primitives. Each one of these can count as HALF of a feature.
    * Lines
    * Line strips
    * Triangle fans

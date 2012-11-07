@@ -29,6 +29,7 @@ namespace utilityCore {
     extern bool epsilonCheck(float a, float b);
     extern std::vector<std::string> tokenizeString(std::string str); 
     extern cudaMat4 glmMat4ToCudaMat4(glm::mat4 a);
+    extern cudaMat4 glmMat4ToCudaMat4NoTranspose(glm::mat4 a);
     extern glm::mat4 cudaMat4ToGlmMat4(cudaMat4 a);
     extern glm::mat4 buildTransformationMatrix(glm::vec3 translation, glm::vec3 rotation, glm::vec3 scale);
     extern void printCudaMat4(cudaMat4 m);
