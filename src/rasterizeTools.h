@@ -13,15 +13,20 @@ struct triangle {
   glm::vec3 p0;
   glm::vec3 p1;
   glm::vec3 p2;
+  glm::vec3 n0;
+  glm::vec3 n1;
+  glm::vec3 n2;
   glm::vec3 c0;
   glm::vec3 c1;
   glm::vec3 c2;
+  bool culled;
 };
 
 struct fragment{
   glm::vec3 color;
   glm::vec3 normal;
   glm::vec3 position;
+  bool scissored;
 };
 
 //Multiplies a cudaMat4 matrix and a vec4
@@ -73,6 +78,26 @@ __host__ __device__ bool isBarycentricCoordInBounds(glm::vec3 barycentricCoord){
 //LOOK: for a given barycentric coordinate, return the corresponding z position on the triangle
 __host__ __device__ float getZAtCoordinate(glm::vec3 barycentricCoord, triangle tri){
   return -(barycentricCoord.x*tri.p0.z + barycentricCoord.y*tri.p1.z + barycentricCoord.z*tri.p2.z);
+}
+
+__host__ __device__ glm::vec3 getColorAtCoordinate(glm::vec3 barycentricCoord, triangle tri){
+  
+	glm::vec3 color;
+	color.x = barycentricCoord.x * tri.c0.x + barycentricCoord.y * tri.c1.x + barycentricCoord.z * tri.c2.x;
+	color.y = barycentricCoord.x * tri.c0.y + barycentricCoord.y * tri.c1.y + barycentricCoord.z * tri.c2.y;
+	color.z = barycentricCoord.x * tri.c0.z + barycentricCoord.y * tri.c1.z + barycentricCoord.z * tri.c2.z;
+	
+	return color;
+}
+
+__host__ __device__ glm::vec3 getNormalAtCoordinate(glm::vec3 barycentricCoord, triangle tri){
+  
+	glm::vec3 normal;
+	normal.x = barycentricCoord.x * tri.n0.x + barycentricCoord.y * tri.n1.x + barycentricCoord.z * tri.n2.x;
+	normal.y = barycentricCoord.x * tri.n0.y + barycentricCoord.y * tri.n1.y + barycentricCoord.z * tri.n2.y;
+	normal.z = barycentricCoord.x * tri.n0.z + barycentricCoord.y * tri.n1.z + barycentricCoord.z * tri.n2.z;
+	
+	return normal;
 }
 
 #endif

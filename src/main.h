@@ -47,6 +47,8 @@ obj* mesh;
 
 float* vbo;
 int vbosize;
+float* nbo;
+int nbosize;
 float* cbo;
 int cbosize;
 int* ibo;

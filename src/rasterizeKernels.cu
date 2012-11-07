@@ -12,6 +12,7 @@
 glm::vec3* framebuffer;
 fragment* depthbuffer;
 float* device_vbo;
+float* device_nbo;
 float* device_cbo;
 int* device_ibo;
 triangle* primitives;
@@ -130,34 +131,148 @@ __global__ void sendImageToPBO(uchar4* PBOpos, glm::vec2 resolution, glm::vec3* 
 }
 
 //TODO: Implement a vertex shader
-__global__ void vertexShadeKernel(float* vbo, int vbosize){
+__global__ void vertexShadeKernel(float* vbo, int vbosize, float* nbo, int nbosize, glm::mat4 MVP){
   int index = (blockIdx.x * blockDim.x) + threadIdx.x;
   if(index<vbosize/3){
+	  
+	  glm::vec4 curVertex = glm::vec4(vbo[index*3], vbo[index*3 + 1], vbo[index*3 + 2], 1.0f);
+	  curVertex = MVP * curVertex;
+
+	  vbo[index*3] = curVertex.x;
+	  vbo[index*3 + 1] = curVertex.y;
+	  vbo[index*3 + 2] = curVertex.z;
+
+	  glm::vec4 curNormal = glm::vec4(nbo[index*3], nbo[index*3 + 1], nbo[index*3 + 2], 1.0f);
+	  curNormal = MVP * curNormal;
+
+	  nbo[index*3] = curNormal.x;
+	  nbo[index*3 + 1] = curNormal.y;
+	  nbo[index*3 + 2] = curNormal.z;
   }
 }
 
 //TODO: Implement primative assembly
-__global__ void primitiveAssemblyKernel(float* vbo, int vbosize, float* cbo, int cbosize, int* ibo, int ibosize, triangle* primitives){
+__global__ void primitiveAssemblyKernel(float* vbo, int vbosize, float* nbo, int nbosize, float* cbo, int cbosize, int* ibo, int ibosize, triangle* primitives){
   int index = (blockIdx.x * blockDim.x) + threadIdx.x;
   int primitivesCount = ibosize/3;
   if(index<primitivesCount){
+
+	  int i = 9*index;
+	  primitives[index].p0 = glm::vec3(vbo[i], vbo[i + 1], vbo[i + 2]);
+	  primitives[index].p1 = glm::vec3(vbo[i + 3], vbo[i + 4], vbo[i + 5]);
+	  primitives[index].p2 = glm::vec3(vbo[i + 6], vbo[i + 7], vbo[i + 8]);
+
+	  primitives[index].n0 = glm::vec3(nbo[i], nbo[i + 1], nbo[i + 2]);
+	  primitives[index].n1 = glm::vec3(nbo[i + 3], nbo[i + 4], nbo[i + 5]);
+	  primitives[index].n2 = glm::vec3(nbo[i + 6], nbo[i + 7], nbo[i + 8]);
+
+	  primitives[index].c0 = glm::vec3(cbo[0], cbo[1], cbo[2]);
+	  primitives[index].c1 = glm::vec3(cbo[3], cbo[4], cbo[5]);
+	  primitives[index].c2 = glm::vec3(cbo[6], cbo[7], cbo[8]);
+
+	  primitives[index].culled = false;
   }
 }
+
+
+__global__ void backfaceCullingKernel(triangle* primitives, int primitivesCount, glm::vec3 camPos, glm::mat4 model, glm::mat4 view, glm::mat4 projection, glm::vec4 viewport){
+	int index = (blockIdx.x * blockDim.x) + threadIdx.x;
+	if(index<primitivesCount){
+		
+		glm::vec3 worldSpaceP0 = glm::unProject(primitives[index].p0, view * model,projection, viewport);
+		glm::vec3 worldSpaceP1 = glm::unProject(primitives[index].p1, view * model,projection, viewport);
+		glm::vec3 worldSpaceP2 = glm::unProject(primitives[index].p2, view * model,projection, viewport);
+		glm::vec3 primitiveNormal = glm::cross(worldSpaceP2 - worldSpaceP0, worldSpaceP1 - worldSpaceP0);
+		
+		if(glm::dot(camPos - worldSpaceP0, primitiveNormal) > 0.0f)
+		{
+			primitives[index].culled = true;
+			//printf("->");
+		}
+	}
+
+}
+
 
 //TODO: Implement a rasterization method, such as scanline.
 __global__ void rasterizationKernel(triangle* primitives, int primitivesCount, fragment* depthbuffer, glm::vec2 resolution){
   int index = (blockIdx.x * blockDim.x) + threadIdx.x;
-  if(index<primitivesCount){
+  if(index<primitivesCount)// && primitives[index].culled == false)
+  {
+	  //translate vertices by +1, then scale by res/2
+	  triangle curTriangle = primitives[index];
+	  curTriangle.p0 = glm::vec3(curTriangle.p0.x + 1, curTriangle.p0.y + 1, curTriangle.p0.z);
+	  curTriangle.p1 = glm::vec3(curTriangle.p1.x + 1, curTriangle.p1.y + 1, curTriangle.p1.z);
+	  curTriangle.p2 = glm::vec3(curTriangle.p2.x + 1, curTriangle.p2.y + 1, curTriangle.p2.z);
+	  
+	  glm::mat3 scalingMatrix = glm::mat3(resolution.x / 2, 0, 0,
+										  0, resolution.y / 2, 0,
+										  0, 0, 1);
+
+	  curTriangle.p0 = scalingMatrix * curTriangle.p0;
+	  curTriangle.p1 = scalingMatrix * curTriangle.p1;
+	  curTriangle.p2 = scalingMatrix * curTriangle.p2;
+
+	  //scan each pixel and use barycentric co ordinates to determine interpolated color value
+	  glm::vec3 min, max, barycentric;
+	  bool isInside;
+	  getAABBForTriangle(curTriangle, min, max);
+	  
+	  for(int i = floor(min.x); i < ceil(max.x); i++)
+	  {
+		  for(int j = floor(min.y); j < ceil(max.y); j++)
+		  {
+			  barycentric = calculateBarycentricCoordinate(curTriangle, glm::vec2(i,j));
+			  isInside = isBarycentricCoordInBounds(barycentric);
+			  if(isInside)
+			  {
+				  int ind = resolution.x * resolution.y - resolution.x + i - j*resolution.x;
+				  if(i < resolution.x && j < resolution.y)
+				  {
+					  glm::vec3 tempPosition = glm::vec3(i,j,getZAtCoordinate(barycentric, curTriangle));
+					  if(tempPosition.z > depthbuffer[(int)(resolution.x * resolution.y) - ind].position.z)
+					  {
+						  depthbuffer[ind].position = tempPosition;
+					  //depthbuffer[ind].color = glm::vec3(1,1,1);
+						  depthbuffer[ind].color = getColorAtCoordinate(barycentric, curTriangle);
+						  depthbuffer[ind].normal = getNormalAtCoordinate(barycentric, curTriangle);
+					  }
+				  }
+			  }
+		  }
+	  }
   }
 }
 
 //TODO: Implement a fragment shader
-__global__ void fragmentShadeKernel(fragment* depthbuffer, glm::vec2 resolution){
+__global__ void fragmentShadeKernel(fragment* depthbuffer, glm::vec2 resolution, glm::vec3 lightPosition, glm::vec3 lightColor){
   int x = (blockIdx.x * blockDim.x) + threadIdx.x;
   int y = (blockIdx.y * blockDim.y) + threadIdx.y;
   int index = x + (y * resolution.x);
   if(x<=resolution.x && y<=resolution.y){
+
+	  glm::vec3 lightDirection = glm::normalize(lightPosition - depthbuffer[index].position);
+	  depthbuffer[index].normal = glm::normalize(depthbuffer[index].normal);
+	  //float factor = max(glm::dot(depthbuffer[index].normal, lightDirection), 0.0f);
+	  float factor = abs(glm::dot(depthbuffer[index].normal, lightDirection));
+	  depthbuffer[index].color =  6 * factor * lightColor * depthbuffer[index].color;
+	  depthbuffer[index].scissored = false;
   }
+}
+
+
+__global__ void scissorTest(glm::vec2 resolution, fragment* depthbuffer, glm::vec2 rectPos, glm::vec2 dimensions){
+
+	int x = (blockIdx.x * blockDim.x) + threadIdx.x;
+	int y = (blockIdx.y * blockDim.y) + threadIdx.y;
+	int index = x + (y * resolution.x);
+
+	if(x<=resolution.x && y<=resolution.y){
+		if(x > rectPos.x && x < rectPos.x + dimensions.x && y > rectPos.y && y < rectPos.y + dimensions.y)
+			depthbuffer[index].scissored = false;
+		else
+			depthbuffer[index].scissored = true;
+	}
 }
 
 //Writes fragment colors to the framebuffer
@@ -167,13 +282,13 @@ __global__ void render(glm::vec2 resolution, fragment* depthbuffer, glm::vec3* f
   int y = (blockIdx.y * blockDim.y) + threadIdx.y;
   int index = x + (y * resolution.x);
 
-  if(x<=resolution.x && y<=resolution.y){
+  if(x<=resolution.x && y<=resolution.y && depthbuffer[index].scissored == false){
     framebuffer[index] = depthbuffer[index].color;
   }
 }
 
 // Wrapper for the __global__ call that sets up the kernel calls and does a ton of memory management
-void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float* vbo, int vbosize, float* cbo, int cbosize, int* ibo, int ibosize){
+void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float* vbo, int vbosize, float* nbo, int nbosize, float* cbo, int cbosize, int* ibo, int ibosize){
 
   // set up crucial magic
   int tileSize = 8;
@@ -196,7 +311,7 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float*
   frag.normal = glm::vec3(0,0,0);
   frag.position = glm::vec3(0,0,-10000);
   clearDepthBuffer<<<fullBlocksPerGrid, threadsPerBlock>>>(resolution, depthbuffer,frag);
-
+  
   //------------------------------
   //memory stuff
   //------------------------------
@@ -211,6 +326,10 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float*
   cudaMalloc((void**)&device_vbo, vbosize*sizeof(float));
   cudaMemcpy( device_vbo, vbo, vbosize*sizeof(float), cudaMemcpyHostToDevice);
 
+  device_nbo = NULL;
+  cudaMalloc((void**)&device_nbo, nbosize*sizeof(float));
+  cudaMemcpy( device_nbo, nbo, nbosize*sizeof(float), cudaMemcpyHostToDevice);
+
   device_cbo = NULL;
   cudaMalloc((void**)&device_cbo, cbosize*sizeof(float));
   cudaMemcpy( device_cbo, cbo, cbosize*sizeof(float), cudaMemcpyHostToDevice);
@@ -221,14 +340,27 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float*
   //------------------------------
   //vertex shader
   //------------------------------
-  vertexShadeKernel<<<primitiveBlocks, tileSize>>>(device_vbo, vbosize);
+  glm::vec3 camPos = glm::vec3(0,0,5);
+  glm::mat4 model = glm::mat4(1.0f);
+  glm::mat4 view = glm::lookAt(camPos, glm::vec3(0,0,0), glm::vec3(0,1,0));
+  glm::mat4 projection = glm::perspective(75.0f, resolution.x/resolution.y, 0.1f, 100.0f);
+  glm::vec4 viewport = glm::vec4(0, 0, resolution.x, resolution.y);
+  glm::mat4 MVP = projection * view * model;
+
+  vertexShadeKernel<<<primitiveBlocks, tileSize>>>(device_vbo, vbosize, device_nbo, nbosize, MVP);
 
   cudaDeviceSynchronize();
   //------------------------------
   //primitive assembly
   //------------------------------
   primitiveBlocks = ceil(((float)ibosize/3)/((float)tileSize));
-  primitiveAssemblyKernel<<<primitiveBlocks, tileSize>>>(device_vbo, vbosize, device_cbo, cbosize, device_ibo, ibosize, primitives);
+  primitiveAssemblyKernel<<<primitiveBlocks, tileSize>>>(device_vbo, vbosize, device_nbo, nbosize, device_cbo, cbosize, device_ibo, ibosize, primitives);
+
+  cudaDeviceSynchronize();
+  //------------------------------
+  //backface culling
+  //------------------------------
+  backfaceCullingKernel<<<primitiveBlocks, tileSize>>>(primitives, ibosize/3, camPos, model, view, projection, viewport);
 
   cudaDeviceSynchronize();
   //------------------------------
@@ -240,7 +372,17 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float*
   //------------------------------
   //fragment shader
   //------------------------------
-  fragmentShadeKernel<<<fullBlocksPerGrid, threadsPerBlock>>>(depthbuffer, resolution);
+  glm::vec3 lpos = glm::vec3(5,5,10);
+  glm::vec3 lcol = glm::vec3(1,1,1);
+  fragmentShadeKernel<<<fullBlocksPerGrid, threadsPerBlock>>>(depthbuffer, resolution, lpos, lcol);
+
+  cudaDeviceSynchronize();
+  //------------------------------
+  //scissor test
+  //------------------------------
+  glm::vec2 rectPos = glm::vec2(0,0);
+  glm::vec2 dimensions = glm::vec2(1000,1000);
+  scissorTest<<<fullBlocksPerGrid, threadsPerBlock>>>(resolution, depthbuffer, rectPos, dimensions);
 
   cudaDeviceSynchronize();
   //------------------------------
