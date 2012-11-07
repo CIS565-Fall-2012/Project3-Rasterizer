@@ -10,8 +10,12 @@
 #include <cmath>
 #include <cutil_math.h>
 #include "glm/glm.hpp"
+#include "utilities.h"
+#include "Light.h"
 
 void kernelCleanup();
-void cudaRasterizeCore(uchar4* pos, glm::vec2 resolution, float frame, float* vbo, int vbosize, float* cbo, int cbosize, int* ibo, int ibosize);
+void cudaRasterizeCore(uchar4* pos, glm::vec2 resolution, float frame, float* vbo, int vbosize, float* cbo, int cbosize, int* ibo, int ibosize, float *nbo, int nbosize,
+	float *vto, int vtosize, cudaMat4 modelViewProjection, glm::vec3 eye, Light *lights, unsigned int numberOfLights, unsigned char *textureImage,
+	unsigned int textureWidth, unsigned int textureHeight);
 
 #endif //RASTERIZEKERNEL_H

@@ -1,0 +1,57 @@
+# Max2Mtl Version 4.0 Mar 10th, 2001
+#
+newmtl RefRep.225
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.0
+illum 2
+map_Kd -s 1.0 -1.0 1.0 Dolphin.exe_Tue_Mar_22_01-13-37_2011_19.png
+#
+newmtl RefRep.227
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.0
+illum 2
+map_Kd -s 1.0 -1.0 1.0 Dolphin.exe_Tue_Mar_22_01-13-37_2011_20.png
+#
+newmtl RefRep.229
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.0
+illum 2
+map_Kd -s 1.0 -1.0 1.0 Dolphin.exe_Tue_Mar_22_01-13-37_2011_21.png
+#
+newmtl RefRep.231
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.0
+illum 2
+map_Kd -s 1.0 -1.0 1.0 Dolphin.exe_Tue_Mar_22_01-13-37_2011_22.png
+#
+newmtl RefRep.233
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.0
+illum 2
+map_Kd -s 1.0 -1.0 1.0 Dolphin.exe_Tue_Mar_22_01-13-37_2011_23.png
+#
+newmtl RefRep.235
+Ka  0.7 0.7 0.7
+Kd  0.7 0.7 0.7
+Ks  0.9 0.9 0.9
+d  1.0
+Ns  0.0
+illum 2
+map_Kd -s 1.0 -1.0 1.0 Dolphin.exe_Tue_Mar_22_01-13-37_2011_24.png
+#
+# EOF
