@@ -26,6 +26,7 @@
 #include "rasterizeKernels.h"
 #include "utilities.h"
 #include "ObjCore/objloader.h"
+#include "Eye.h"
 
 using namespace std;
 
@@ -43,6 +44,7 @@ GLuint pbo = (GLuint)NULL;
 GLuint displayImage;
 uchar4 *dptr;
 
+Eye eye;
 obj* mesh;
 
 float* vbo;
@@ -51,6 +53,8 @@ float* cbo;
 int cbosize;
 int* ibo;
 int ibosize;
+float* nbo;
+int nbosize;
 
 //-------------------------------
 //----------CUDA STUFF-----------
@@ -101,5 +105,7 @@ void cleanupCuda();
 void deletePBO(GLuint* pbo);
 void deleteTexture(GLuint* tex);
 void shut_down(int return_code);
+void onMouseCb(int button, int state, int x, int y);
+void onMouseMotionCb(int x, int y);
 
 #endif

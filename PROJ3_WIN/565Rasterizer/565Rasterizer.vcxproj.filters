@@ -13,6 +13,7 @@
     <ClInclude Include="..\..\src\ObjCore\objloader.h">
       <Filter>ObjCore</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\eye.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\glslUtility.cpp" />

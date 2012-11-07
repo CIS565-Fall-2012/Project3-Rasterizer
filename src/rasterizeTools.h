@@ -16,12 +16,21 @@ struct triangle {
   glm::vec3 c0;
   glm::vec3 c1;
   glm::vec3 c2;
+  glm::vec3 n0;
+  glm::vec3 n1;
+  glm::vec3 n2;
+  glm::vec3 p0Original;
+  glm::vec3 p1Original;
+  glm::vec3 p2Original;
 };
 
 struct fragment{
   glm::vec3 color;
   glm::vec3 normal;
   glm::vec3 position;
+  float depthVal;
+  bool valid;
+  int pixelIndex;
 };
 
 //Multiplies a cudaMat4 matrix and a vec4
@@ -73,6 +82,15 @@ __host__ __device__ bool isBarycentricCoordInBounds(glm::vec3 barycentricCoord){
 //LOOK: for a given barycentric coordinate, return the corresponding z position on the triangle
 __host__ __device__ float getZAtCoordinate(glm::vec3 barycentricCoord, triangle tri){
   return -(barycentricCoord.x*tri.p0.z + barycentricCoord.y*tri.p1.z + barycentricCoord.z*tri.p2.z);
+}
+
+__host__ __device__ void printCudaMat4(cudaMat4 matrix)
+{
+	printf("Matrix:\n(%f, %f, %f, %f)\n(%f, %f, %f, %f)\n(%f, %f, %f, %f)\n(%f, %f, %f, %f)\n",
+			  matrix.x.x, matrix.x.y, matrix.x.z, matrix.x.w, 
+			  matrix.y.x, matrix.y.y, matrix.y.z, matrix.y.w, 
+			  matrix.z.x, matrix.z.y, matrix.z.z, matrix.z.w, 
+			  matrix.w.x, matrix.w.y, matrix.w.z, matrix.w.w);
 }
 
 #endif
