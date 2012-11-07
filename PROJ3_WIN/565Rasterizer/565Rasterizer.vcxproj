@@ -18,6 +18,8 @@
     <ClInclude Include="..\..\src\ObjCore\objloader.h" />
     <ClInclude Include="..\..\src\rasterizeKernels.h" />
     <ClInclude Include="..\..\src\rasterizeTools.h" />
+    <ClInclude Include="..\..\src\stb_image\stb_image.h" />
+    <ClInclude Include="..\..\src\stb_image\stb_image_write.h" />
     <ClInclude Include="..\..\src\utilities.h" />
   </ItemGroup>
   <ItemGroup>
@@ -25,10 +27,14 @@
     <ClCompile Include="..\..\src\main.cpp" />
     <ClCompile Include="..\..\src\ObjCore\obj.cpp" />
     <ClCompile Include="..\..\src\ObjCore\objloader.cpp" />
+    <ClCompile Include="..\..\src\stb_image\stb_image.c" />
+    <ClCompile Include="..\..\src\stb_image\stb_image_write.c" />
     <ClCompile Include="..\..\src\utilities.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="..\..\src\rasterizeKernels.cu" />
+    <CudaCompile Include="..\..\src\rasterizeKernels.cu">
+      <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">compute_20,sm_20;%(CodeGeneration)</CodeGeneration>
+    </CudaCompile>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{FF21CA49-522E-4E86-B508-EE515B248FC4}</ProjectGuid>
@@ -86,6 +92,7 @@
     <CudaCompile>
       <CompileOut>$(ProjectDir)$(Platform)/$(Configuration)/%(Filename)%(Extension).obj</CompileOut>
       <Include>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v4.0\include;C:/ProgramData/NVIDIA Corporation/NVIDIA GPU Computing SDK 4.0/C/common/inc;../shared/glew/includes;../shared/freeglut/includes</Include>
+      <CodeGeneration>compute_20,sm_20</CodeGeneration>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -111,6 +118,7 @@
     <CudaCompile>
       <CompileOut>$(ProjectDir)$(Platform)/$(Configuration)/%(Filename)%(Extension).obj</CompileOut>
       <Include>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v4.0\include;C:/ProgramData/NVIDIA Corporation/NVIDIA GPU Computing SDK 4.0/C/common/inc;../shared/glew/includes;../shared/freeglut/includes</Include>
+      <CodeGeneration>compute_20,sm_20</CodeGeneration>
     </CudaCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
