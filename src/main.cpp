@@ -99,8 +99,9 @@ void runCuda(){
   float newcbo[] = {0.0, 1.0, 0.0, 
                     0.0, 0.0, 1.0, 
                     1.0, 0.0, 0.0};
-  cbo = newcbo;
-  cbosize = 9;
+
+  cbo = newcbo; //mesh->getCBO(); 
+  cbosize = 9; //mesh->getCBOsize();
 
   ibo = mesh->getIBO();
   ibosize = mesh->getIBOsize();

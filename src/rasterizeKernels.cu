@@ -183,7 +183,7 @@ __global__ void primitiveAssemblyKernel(vertex* vbo, int vbosize, float* cbo, in
 	  int idxY = idxX + 1;
 	  int idxZ = idxX + 2;
 
-	  int idxCx = ( ibo[idx0] % (cbosize/3) ) * 3;
+	  int idxCx = ( ibo[idx0]%(cbosize/3) ) * 3;
 	  int idxCy = idxCx + 1;
 	  int idxCz = idxCx + 2;
 	  
@@ -201,7 +201,7 @@ __global__ void primitiveAssemblyKernel(vertex* vbo, int vbosize, float* cbo, in
 	  idxY = idxX + 1;
 	  idxZ = idxX + 2;
 
-	  idxCx = ( ibo[idx1] % (cbosize/3) ) * 3;
+	  idxCx = ( ibo[idx1]%(cbosize/3) ) * 3;
 	  idxCy = idxCx + 1;
 	  idxCz = idxCx + 2;
 
@@ -219,7 +219,7 @@ __global__ void primitiveAssemblyKernel(vertex* vbo, int vbosize, float* cbo, in
 	  idxY = idxX + 1;
 	  idxZ = idxX + 2;
 
-	  idxCx = ( ibo[idx2] % (cbosize/3) ) * 3;
+	  idxCx = ( ibo[idx2]%(cbosize/3) ) * 3;
 	  idxCy = idxCx + 1;
 	  idxCz = idxCx + 2;
 
@@ -435,7 +435,7 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float*
   cudaMemcpy( device_vbo, vbo, vbosize*sizeof(float), cudaMemcpyHostToDevice);
 
   device_vboFull = NULL;
-  cudaMalloc((void**)&device_vboFull, vbosize/3*sizeof(float));
+  cudaMalloc((void**)&device_vboFull, vbosize*sizeof(vertex));
 
   device_cbo = NULL;
   cudaMalloc((void**)&device_cbo, cbosize*sizeof(float));
