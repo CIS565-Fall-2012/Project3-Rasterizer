@@ -19,7 +19,7 @@ int* device_ibo;
 triangle* primitives;
  cudaMat4 projectionMatrix;
  cudaMat4 viewMatrix;
- glm::vec3 lightPosition = glm::vec3(4,10,4);
+ glm::vec3 lightPosition = glm::vec3(10,10,-10);
   blendType blendtype = NONE;
 
  glm::vec4 scissorWindow;
@@ -384,13 +384,13 @@ __global__ void rasterizationKernel(triangle* primitives, int primitivesCount, f
 
 
 	  //clip 
-	  maxX = glm::min(glm::max(tri.p0.x, glm::max(tri.p1.x, tri.p2.x)),windowsize.z);
+	maxX = glm::min(glm::max(tri.p0.x, glm::max(tri.p1.x, tri.p2.x)),windowsize.z);
 	  minX = glm::max(glm::min(tri.p0.x, glm::min(tri.p1.x, tri.p2.x)), windowsize.x);
 	  maxY = glm::min(glm::max(tri.p0.y, glm::max(tri.p1.y, tri.p2.y)),windowsize.w);
 	  minY = glm::max(glm::min(tri.p0.y, glm::min(tri.p1.y, tri.p2.y)), windowsize.y);
 
 
-
+	  //depthbuffer[int()]
 	  for(int y = minY ; y <= maxY; y ++)
 	  {
 		  for(int x = minX; x <= maxX; x++)
@@ -402,6 +402,7 @@ __global__ void rasterizationKernel(triangle* primitives, int primitivesCount, f
 			 
 			  if(isBarycentricCoordInBounds(baryCord))
 			  {
+				 // depthbuffer[int(x + resolution.x * y)].color = tri.c0;
 				  float tmpdepth = (baryCord.x * initialtri.p0 + baryCord.y * initialtri.p1 + baryCord.z * initialtri.p2).z;
 				  //NDC COORDINATE
 
@@ -440,17 +441,14 @@ __global__ void fragmentShadeKernel(fragment* depthbuffer, glm::vec2 resolution,
   int index = x + (y * resolution.x);
   if( x >= windowsize.x && y >= windowsize.y && x <= windowsize.z && y<= windowsize.w){
 
-	  fragment frag = depthbuffer[index];
-	  glm::vec3 lightDir = glm::normalize(lightPosition - frag.position);
-	  depthbuffer[index].lightDir = lightDir;
-	  depthbuffer[index].color.z = glm::dot(frag.normal,lightDir);
-	// depthbuffer[index].color = frag.color * glm::max(glm::dot(frag.normal,lightDir), 0.0f);
+	 fragment frag = depthbuffer[index];
+	 glm::vec3 lightDir = glm::normalize(lightPosition - frag.position);
+	 depthbuffer[index].lightDir = lightDir;
+	 depthbuffer[index].color.z = glm::dot(frag.normal,lightDir);
+	 depthbuffer[index].color = frag.color * glm::max(glm::dot(frag.normal,lightDir), 0.0f);
 
 	  
-	 // glm::vec3 lightDir = light
-	 // glm::vec3 color = depthbuffer[index].color * glm::dot(depthbuffer[index].normal, );
-	 // color = color * glm::dot()
-	 // depthbuffer[index].color = 
+	
   }
 }
 
@@ -637,6 +635,22 @@ void cudaRasterizeCore(uchar4* PBOpos, glm::vec2 resolution, float frame, float*
 
   rasterizationKernel<<<primitiveBlocks, tileSize>>>(primitives, ibosize/3, depthbuffer, resolution, windowSize,projectionMatrix);
   cudaDeviceSynchronize();
+
+ /* triangle * cputri = new triangle[ibosize/ 3];
+
+  cudaMemcpy(cputri, primitives, sizeof(triangle)*ibosize/3, cudaMemcpyDeviceToHost);
+
+  for(int i = 0; i < ibosize / 3; i++)
+  {
+	  std::cout << cputri[i].p0.x <<" "<<cputri[i].p0.y<<" "<<cputri[i].p0.z <<std::endl;
+	  std::cout << cputri[i].p1.x <<" "<<cputri[i].p1.y<<" "<<cputri[i].p1.z <<std::endl;
+	  std::cout << cputri[i].p2.x <<" "<<cputri[i].p2.y<<" "<<cputri[i].p2.z <<std::endl;
+	  std::cout <<"______" <<std::endl;
+	  std::cout << cputri[i].c0.x <<" "<<cputri[i].c0.y<<" "<<cputri[i].c0.z <<std::endl;
+	  std::cout << cputri[i].c1.x <<" "<<cputri[i].c1.y<<" "<<cputri[i].c1.z <<std::endl;
+	  std::cout << cputri[i].c2.x <<" "<<cputri[i].c2.y<<" "<<cputri[i].c2.z <<std::endl;
+	   std::cout <<"_____________________" <<std::endl;
+  }*/
   //------------------------------
   //fragment shader
   //------------------------------

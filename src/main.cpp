@@ -263,6 +263,18 @@ void runCuda(){
 		{
 			dragging = false;
 		}
+
+		if(button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN)
+		{
+			currentX = x;
+			currentY = y;
+			zoom = true;
+		}
+		if(button == GLUT_RIGHT_BUTTON && state == GLUT_UP)
+		{
+			zoom = false;
+		}
+
 		rotating = false;
 	}
 
@@ -292,10 +304,19 @@ void runCuda(){
 		if(dragging)
 		{
 			glm::mat4 dragMatrix(1.0);
-			glm::vec3 dragVector = float(x - currentX) * draggingSpeed * eye.right + float(y - currentY) * draggingSpeed * eye.up;
+			glm::vec3 dragVector = float(x - currentX) * draggingSpeed * eye.right + float( currentY - y) * draggingSpeed * eye.up;
 			 dragMatrix = glm::translate(dragMatrix,dragVector);
 			 eye.position = glm::vec3(dragMatrix * glm::vec4(eye.position, 1.0f));
 			 
+		}
+		if(zoom)
+		{
+			glm::mat4 dragMatrix(1.0);
+			if(x - currentX < 0)
+			  dragMatrix = glm::translate(dragMatrix,zoomspeed * eye.view);
+			else
+				dragMatrix = glm::translate(dragMatrix,-zoomspeed * eye.view);
+			eye.position =  glm::vec3(dragMatrix * glm::vec4(eye.position, 1.0f));
 		}
 		currentX = x;
 		currentY = y;
@@ -375,7 +396,7 @@ void initCuda(){
   // Clean up on program exit
   atexit(cleanupCuda);
   SetScissorWindow(glm::vec4(300,300,500,500));
-  texture.mapptr = stbi_load("yoyo.jpg",&texture.width, &texture.height,&texture.depth,0);
+  texture.mapptr = stbi_load("cow.jpeg",&texture.width, &texture.height,&texture.depth,0);
   runCuda();
 }
 
@@ -520,10 +541,11 @@ void calcuatetransformationMatrix(  Camera eye, glm::vec2 resolution, float fron
 
 	lookatMatrix[0][0] = X.x;                     lookatMatrix[0][1] = Y.x;       lookatMatrix[0][2] = Z.x;      lookatMatrix[0][3] = 0;
 	lookatMatrix[1][0] = X.y;                     lookatMatrix[1][1] = Y.y;       lookatMatrix[1][2] = Z.y;      lookatMatrix[1][3] = 0;
-	lookatMatrix[1][0] = X.z;                     lookatMatrix[2][1] = Y.z;       lookatMatrix[2][2] = Z.z;      lookatMatrix[2][3] = 0;
-	lookatMatrix[1][0] = -1 * eye.position.x;     lookatMatrix[3][1] = -1 * eye.position.y;         lookatMatrix[3][2] = -1 * eye.position.z;        lookatMatrix[3][3] = 1;
+	lookatMatrix[2][0] = X.z;                     lookatMatrix[2][1] = Y.z;       lookatMatrix[2][2] = Z.z;      lookatMatrix[2][3] = 0;
+	lookatMatrix[3][0] = 0;     lookatMatrix[3][1] = 0;         lookatMatrix[3][2] = 0;        lookatMatrix[3][3] = 1;
 
-
+	glm::vec4 newtranslation = lookatMatrix * glm::vec4(-1.0f * eye.position,1);
+	lookatMatrix[3] = newtranslation;
 
 
 	float aspectRatio = resolution.x / resolution.y;

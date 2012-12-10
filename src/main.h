@@ -68,7 +68,7 @@ public:
 	glm::vec3 view;
 	glm::vec3 right;
 	float fov;
-	Camera(glm::vec3 p = glm::vec3(0,-0.5,2), glm::vec3 v = glm::vec3(0,0,-1), glm::vec3 u = glm::vec3(0,-1,0), float f =20):position(p),view(v), up(u), fov(f){ right = glm::cross(up,-1.0f * view);};
+	Camera(glm::vec3 p = glm::vec3(0,0,2), glm::vec3 v = glm::vec3(0,0,1), glm::vec3 u = glm::vec3(0,1,0), float f =30):position(p),view(v), up(u), fov(f){ right = glm::cross(up,-1.0f * view);};
 };
 Camera eye;
 glm::vec3 center = glm::vec3(0,0,0);
@@ -82,12 +82,13 @@ int currentX, currentY;
 bool dragging = false;
 bool rotating = false;
 bool clipping = false;
+bool zoom = false;
 float rotateSpeed = 0.04f;
-float draggingSpeed = 0.01f;
+float draggingSpeed = -0.01f;
 float minAngle = -20;
 float maxAngle = 20;
 glm::vec4 windowSize;
-float zoomspeed = 0.2;
+float zoomspeed = 0.05;
 glm::mat4 transMatrix = glm::mat4(1.0);
 //-------------------------------
 //-------------MAIN--------------
