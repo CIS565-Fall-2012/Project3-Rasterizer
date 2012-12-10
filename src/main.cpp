@@ -2,6 +2,7 @@
 // Written by Yining Karl Li, Copyright (c) 2012 University of Pennsylvania
 
 #include "main.h"
+#include "stb_image/stb_image.h"
 
 //-------------------------------
 //-------------MAIN--------------
@@ -71,7 +72,8 @@ int main(int argc, char** argv){
   #else
     glutDisplayFunc(display);
     glutKeyboardFunc(keyboard);
-
+	glutMouseFunc(mouse);
+	 glutMotionFunc(motion); 
     glutMainLoop();
   #endif
   kernelCleanup();
@@ -85,11 +87,15 @@ int main(int argc, char** argv){
 void runCuda(){
   // Map OpenGL buffer object for writing from CUDA on a single GPU
   // No data is moved (Win & Linux). When mapped to CUDA, OpenGL should not use this buffer
-  dptr=NULL;
+
+	
 
   vbo = mesh->getVBO();
-  vbosize = mesh->getVBOsize();
 
+  vbosize = mesh->getVBOsize();
+  nbo = mesh->getNBO();
+
+  nbosize = mesh->getNBOsize();
   float newcbo[] = {0.0, 1.0, 0.0, 
                     0.0, 0.0, 1.0, 
                     1.0, 0.0, 0.0};
@@ -98,11 +104,20 @@ void runCuda(){
 
   ibo = mesh->getIBO();
   ibosize = mesh->getIBOsize();
-
+ 
+  calcuatetransformationMatrix( eye,glm::vec2(width, height), front,  back);
+    dptr=NULL;
   cudaGLMapBufferObject((void**)&dptr, pbo);
-  cudaRasterizeCore(dptr, glm::vec2(width, height), frame, vbo, vbosize, cbo, cbosize, ibo, ibosize);
+  if(ReadBlendType() == ADD)
+  {
+	  drawTexture(dptr,width, height,texture);
+  }
+ 
+  //clearPBOpos(dptr,width,height);
+  cudaRasterizeCore(dptr, glm::vec2(width, height), frame, vbo, vbosize, nbo, nbosize, cbo, cbosize, ibo, ibosize);
   cudaGLUnmapBufferObject(pbo);
 
+ 
   vbo = NULL;
   cbo = NULL;
   ibo = NULL;
@@ -157,8 +172,7 @@ void runCuda(){
       fpstracker = 0;
       seconds = seconds2;
 
-    }
-
+	}
     string title = "CIS565 Rasterizer | "+ utilityCore::convertIntToString((int)fps) + "FPS";
     glutSetWindowTitle(title.c_str());
 
@@ -172,6 +186,7 @@ void runCuda(){
     // VAO, shader program, and texture already bound
     glDrawElements(GL_TRIANGLES, 6,  GL_UNSIGNED_SHORT, 0);
 
+	 glutBitmapCharacter(GLUT_BITMAP_HELVETICA_10, 'ç');
     glutPostRedisplay();
     glutSwapBuffers();
   }
@@ -183,8 +198,129 @@ void runCuda(){
        case(27):
          shut_down(1);    
          break;
+	   case('s'):
+		   Toggle(SCISSOR_TEST);
+		   break;
+		   case('S'):
+		   Toggle(SCISSOR_TEST);
+		   break;
+	   case ('+'):
+		   break;
+	   case ('b'):
+		   SetBlendType(ADD);
+		   break;
+		   case ('B'):
+		   SetBlendType(ADD);
+		   break;
+
     }
   }
+	void mouse(int button, int state, int x, int y)
+	{
+		if(!clipping && glutGetModifiers() == GLUT_ACTIVE_ALT && button == GLUT_LEFT_BUTTON && state == GLUT_DOWN )
+		{
+
+			currentX = x;
+			currentY = y;
+			rotating = true;
+			return;
+
+			
+		}
+
+
+
+		if(!clipping && button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
+		{
+			windowSize.x = x;
+			windowSize.y = y;
+			clipping = true;
+			return;
+		}
+
+		if(clipping && button == GLUT_LEFT_BUTTON &&state == GLUT_UP)
+		{
+			int newx = min(windowSize.x, windowSize.z);
+			int newy = min(windowSize.y, windowSize.w);
+
+			int newz = max(windowSize.x, windowSize.z);
+			int neww = max(windowSize.y, windowSize.w);
+
+			windowSize = glm::vec4(newx,newy, newz, neww);
+
+			SetScissorWindow(windowSize);
+			clipping = false;
+			return;
+		}
+
+		if(button == GLUT_MIDDLE_BUTTON && state == GLUT_DOWN)
+		{
+			currentX = x;
+			currentY = y;
+			dragging = true;
+		}
+		if(button == GLUT_MIDDLE_BUTTON && state == GLUT_UP)
+		{
+			dragging = false;
+		}
+
+		if(button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN)
+		{
+			currentX = x;
+			currentY = y;
+			zoom = true;
+		}
+		if(button == GLUT_RIGHT_BUTTON && state == GLUT_UP)
+		{
+			zoom = false;
+		}
+
+		rotating = false;
+	}
+
+	void motion(int x, int y)
+	{
+		if(rotating)
+		{
+			float rotX = (x - currentX) * rotateSpeed;
+			glm::clamp(rotX, minAngle,maxAngle);
+			float rotY = (y - currentY) * rotateSpeed;
+			glm::clamp(rotY, minAngle,maxAngle);
+				glm::mat4 rotationX(1.0),rotationY(1.0);
+				rotationY = glm::rotate(rotationY,rotY, eye.right);
+				eye.up = glm::vec3(rotationY * glm::vec4(eye.up,0));
+				eye.view = glm::vec3(rotationY * glm::vec4(eye.view,0));
+				rotationX = glm::rotate(rotationX,rotX,eye.up);
+				eye.view = glm::vec3(rotationX * glm::vec4(eye.view,0));
+				eye.right = glm::vec3(rotationX * glm::vec4(eye.right,0));
+		}
+
+		if(clipping)
+		{
+			windowSize.z = x;
+			windowSize.w = y;
+		}
+
+		if(dragging)
+		{
+			glm::mat4 dragMatrix(1.0);
+			glm::vec3 dragVector = float(x - currentX) * draggingSpeed * eye.right + float( currentY - y) * draggingSpeed * eye.up;
+			 dragMatrix = glm::translate(dragMatrix,dragVector);
+			 eye.position = glm::vec3(dragMatrix * glm::vec4(eye.position, 1.0f));
+			 
+		}
+		if(zoom)
+		{
+			glm::mat4 dragMatrix(1.0);
+			if(x - currentX < 0)
+			  dragMatrix = glm::translate(dragMatrix,zoomspeed * eye.view);
+			else
+				dragMatrix = glm::translate(dragMatrix,-zoomspeed * eye.view);
+			eye.position =  glm::vec3(dragMatrix * glm::vec4(eye.position, 1.0f));
+		}
+		currentX = x;
+		currentY = y;
+	}
 
 #endif
   
@@ -244,6 +380,7 @@ void initPBO(GLuint* pbo){
     // Allocate data for the buffer. 4-channel 8-bit image
     glBufferData(GL_PIXEL_UNPACK_BUFFER, size_tex_data, NULL, GL_DYNAMIC_COPY);
     cudaGLRegisterBufferObject( *pbo );
+
   }
 }
 
@@ -252,10 +389,14 @@ void initCuda(){
   cudaGLSetGLDevice( cutGetMaxGflopsDeviceId() );
 
   initPBO(&pbo);
-
+  dptr=NULL;
+  cudaGLMapBufferObject((void**)&dptr, pbo);
+  clearPBOpos(dptr,width,height);
+  cudaGLUnmapBufferObject(pbo);
   // Clean up on program exit
   atexit(cleanupCuda);
-
+  SetScissorWindow(glm::vec4(300,300,500,500));
+  texture.mapptr = stbi_load("cow.jpeg",&texture.width, &texture.height,&texture.depth,0);
   runCuda();
 }
 
@@ -351,4 +492,85 @@ void shut_down(int return_code){
   glfwTerminate();
   #endif
   exit(return_code);
+}
+
+void calcuatetransformationMatrix(  Camera eye, glm::vec2 resolution, float front, float back)
+{
+	/*glm::vec4 normal = glm::vec4(glm::normalize(glm::vec3(center - eye.position)),0);
+	
+	glm::vec4 Y = glm::normalize(glm::vec4(eye.up,0) - glm::dot(glm::vec4(eye.up,0),normal ) * normal);
+	glm::vec4 X = glm::cross(Y, normal);*/
+
+	/*glm::vec3 Z = glm::normalize(glm::vec3(center - eye.position));
+	glm::vec3 Y = glm::normalize(eye.up - glm::dot(eye.up, Z) * Z);
+	glm::vec3 X = glm::cross(Y, Z);
+
+	glm::mat4 m;
+	
+	// Look At
+	trans_matrix.x.x = X.x; trans_matrix.y.x = X.y; trans_matrix.z.x = X.z; trans_matrix.w.x = -1 *  eye.position.x;
+	trans_matrix.x.y = Y.x; trans_matrix.y.y = Y.y; trans_matrix.z.y = Y.z; trans_matrix.w.y = -1 *  eye.position.y;
+	trans_matrix.x.z = Z.x; trans_matrix.y.z = Z.y; trans_matrix.z.z = Z.z; trans_matrix.w.z = -1 *  eye.position.z;
+	trans_matrix.x.w = 0;   trans_matrix.y.w = 0;   trans_matrix.z.w = 0;   trans_matrix.w.w = 1;     
+
+	//Perspective ViewPort Transform
+	glm::vec2 w_start;
+	glm::vec2 w_end;
+	cudaMat4 viewport_trans;
+	viewport_trans.x = glm::vec4(2.0f * view_plane / far / resolution.x, 0,0,0);
+	viewport_trans.y = glm::vec4(0, 2.0f * view_plane / far / resolution.y,0,0);
+	viewport_trans.z = glm::vec4((2.0f * glm::dot(X,Z) - (w_end.x + w_start.x)) / ((w_end.x - w_start.x)*far),
+		                         (2.0f * glm::dot(Y,Z) - (w_end.y + w_start.y)) / ((w_end.x - w_start.x)*far),
+		                          1.0f / far, 
+								  0);
+
+	viewport_trans.w = glm::vec4(0,0,0,1);
+
+	trans_Matrix = multiplyMV(view_port_trans, trans_Matrix);*/
+
+	glm::vec3 Z = -1.0f * eye.view;
+	glm::vec3 Y = glm::normalize(eye.up - glm::dot(eye.up, Z) * Z);
+	glm::vec3 X = glm::normalize(glm::cross(1.0f * Y, Z));
+
+	//Look At
+	glm::mat4 lookatMatrix;
+	/*lookatMatrix[0][0] = X.x; lookatMatrix[0][1] = X.y; lookatMatrix[0][2] = X.z; lookatMatrix[0][3] = -1 * eye.position.x;
+	lookatMatrix[1][0] = Y.x; lookatMatrix[1][1] = Y.y; lookatMatrix[ 1][2] = Y.z; lookatMatrix[1][3] = -1 * eye.position.y;
+	lookatMatrix[2][0] = Z.x; lookatMatrix[2][1] = Z.y; lookatMatrix[2][2] = Z.z; lookatMatrix[2][3] = -1 * eye.position.z;
+	lookatMatrix[3][0] = 0;   lookatMatrix[3][1] = 0;   lookatMatrix[3][2] = 0;   lookatMatrix[3][3] = 1;*/
+
+	lookatMatrix[0][0] = X.x;                     lookatMatrix[0][1] = Y.x;       lookatMatrix[0][2] = Z.x;      lookatMatrix[0][3] = 0;
+	lookatMatrix[1][0] = X.y;                     lookatMatrix[1][1] = Y.y;       lookatMatrix[1][2] = Z.y;      lookatMatrix[1][3] = 0;
+	lookatMatrix[2][0] = X.z;                     lookatMatrix[2][1] = Y.z;       lookatMatrix[2][2] = Z.z;      lookatMatrix[2][3] = 0;
+	lookatMatrix[3][0] = 0;     lookatMatrix[3][1] = 0;         lookatMatrix[3][2] = 0;        lookatMatrix[3][3] = 1;
+
+	glm::vec4 newtranslation = lookatMatrix * glm::vec4(-1.0f * eye.position,1);
+	lookatMatrix[3] = newtranslation;
+
+
+	float aspectRatio = resolution.x / resolution.y;
+	float inverseTanFov = 1.0f / tan((eye.fov * PI/ 180.0f));
+	
+
+	glm::mat4 viewTrans;
+
+/*	viewTrans[0][0] = inverseTanFov / aspectRatio;    viewTrans[0][1] = 0;              viewTrans[0][2] = 0;                             viewTrans[0][3] = 0;
+	viewTrans[1][0] = 0;                              viewTrans[1][1] = inverseTanFov;  viewTrans[1][2] = 0;                             viewTrans[1][3] = 0;
+	viewTrans[2][0] = 0;                              viewTrans[2][1] = 0;              viewTrans[2][2] = (front + back)/(front - back); viewTrans[2][3] = 2 * front * back / (front - back);
+	viewTrans[3][0] = 0;                              viewTrans[3][1] = 0;              viewTrans[3][2] = -1;                            viewTrans[3][3] = 0;*/
+
+	viewTrans[0][0] = inverseTanFov / aspectRatio;    viewTrans[0][1] = 0;              viewTrans[0][2] = 0;                                           viewTrans[0][3] = 0;
+	viewTrans[1][0] = 0;                              viewTrans[1][1] = inverseTanFov;  viewTrans[1][2] = 0;                                           viewTrans[1][3] = 0;
+	viewTrans[2][0] = 0;                              viewTrans[2][1] = 0;              viewTrans[2][2] = (front + back)/(front - back);               viewTrans[2][3] = -1;
+	viewTrans[3][0] = 0;                              viewTrans[3][1] = 0;              viewTrans[3][2] = 2 * front * back / (front - back);           viewTrans[3][3] = 0;
+	
+
+	setProjectionMatrix(viewTrans);
+	setViewMatrix(lookatMatrix);
+
+	//return viewTrans * lookatMatrix;
+	//return glm::mat4(1.0);
+	//Look At
+	//return lookatMatrix; 
+
 }

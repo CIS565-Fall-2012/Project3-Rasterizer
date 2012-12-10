@@ -13,6 +13,8 @@
     <ClInclude Include="..\..\src\ObjCore\objloader.h">
       <Filter>ObjCore</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\stb_image\stb_image.h" />
+    <ClInclude Include="..\..\src\stb_image\stb_image_write.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\glslUtility.cpp" />
@@ -24,6 +26,8 @@
     <ClCompile Include="..\..\src\ObjCore\objloader.cpp">
       <Filter>ObjCore</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\stb_image\stb_image.c" />
+    <ClCompile Include="..\..\src\stb_image\stb_image_write.c" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="..\..\src\rasterizeKernels.cu" />

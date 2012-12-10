@@ -13,15 +13,23 @@ struct triangle {
   glm::vec3 p0;
   glm::vec3 p1;
   glm::vec3 p2;
+  glm::vec3 w3;
+
   glm::vec3 c0;
   glm::vec3 c1;
   glm::vec3 c2;
+
+  glm::vec3 n0;
+  glm::vec3 n1;
+  glm::vec3 n2;
 };
+
 
 struct fragment{
   glm::vec3 color;
   glm::vec3 normal;
   glm::vec3 position;
+  glm::vec3 lightDir;
 };
 
 //Multiplies a cudaMat4 matrix and a vec4
@@ -31,6 +39,16 @@ __host__ __device__ glm::vec3 multiplyMV(cudaMat4 m, glm::vec4 v){
   r.y = (m.y.x*v.x)+(m.y.y*v.y)+(m.y.z*v.z)+(m.y.w*v.w);
   r.z = (m.z.x*v.x)+(m.z.y*v.y)+(m.z.z*v.z)+(m.z.w*v.w);
   return r;
+}
+__host__ __device__ glm::vec4 multiplyMV4(cudaMat4 m, glm::vec4 v)
+{
+	glm::vec4 r;
+	r.x = (m.x.x * v.x) + (m.y.x * v.y) + (m.z.x * v.z) + m.w.x;
+	r.y = (m.x.y * v.x) + (m.y.y * v.y) + (m.z.y * v.z) + m.w.y;
+	r.z = (m.x.z * v.x) + (m.y.z * v.y) + (m.z.z * v.z) + m.w.z;
+	r.w = (m.x.w * v.x) + (m.y.w * v.y) + (m.z.w * v.z) + m.w.w;
+
+	return r;
 }
 
 //LOOK: finds the axis aligned bounding box for a given triangle
