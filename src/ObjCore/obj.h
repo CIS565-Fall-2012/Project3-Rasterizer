@@ -23,9 +23,11 @@ private:
 	int nbosize;
 	int cbosize;
 	int ibosize;
+	int tbosize;
 	float* vbo;
 	float* nbo;
 	float* cbo;
+	float* tbo;
 	int* ibo;
 	float* boundingbox;
 	float top;
@@ -61,10 +63,12 @@ public:
 	float* getCBO();
 	float* getNBO();
 	int* getIBO();
+	float* getTBO();
 	int getVBOsize();
 	int getNBOsize();
 	int getIBOsize();
 	int getCBOsize();
+	int getTBOsize();
     vector<glm::vec4>* getPoints();
 	vector<vector<int> >* getFaces(); 
 	vector<vector<int> >* getFaceNormals(); 
