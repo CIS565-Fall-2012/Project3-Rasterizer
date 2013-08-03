@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <cuda.h>
 #include <cmath>
-#include <cutil_math.h>
 #include <thrust/random.h>
 #include "rasterizeKernels.h"
 #include "rasterizeTools.h"
@@ -470,8 +469,8 @@ __global__ void fragmentShadeKernel(fragment* depthbuffer, glm::vec2 resolution,
 			glm::vec3 Reflected = glm::normalize(Incident - 2.0f * normal * glm::dot(Incident, normal));//Ri - 2 * N *(Ri . N)
 
 			//calculate diffuse term and clamp to the range [0, 1]
-			float diffuseTerm = clamp(glm::dot(normal, glm::normalize(LightPosition - depthbuffer[index].orig_position)), 0.0, 1.0);
-			float specularTerm = clamp(glm::dot(Reflected, Incident), 0.0, 1.0);
+			float diffuseTerm = glm::clamp(glm::dot(normal, glm::normalize(LightPosition - depthbuffer[index].orig_position)), 0.0f, 1.0f);
+			float specularTerm = glm::clamp(glm::dot(Reflected, Incident), 0.0f, 1.0f);
 			
 			if(diffuseTerm == 0)
 				specularTerm = 0;

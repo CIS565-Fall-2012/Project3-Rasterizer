@@ -549,7 +549,7 @@ void initPBO(GLuint* pbo){
 
 void initCuda(){
   // Use device with highest Gflops/s
-  cudaGLSetGLDevice( cutGetMaxGflopsDeviceId() );
+  //cudaGLSetGLDevice( cutGetMaxGflopsDeviceId() );
 
   initPBO(&pbo);
 

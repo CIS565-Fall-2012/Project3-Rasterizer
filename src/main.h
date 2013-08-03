@@ -4,6 +4,8 @@
 #ifndef MAIN_H
 #define MAIN_H
 
+#include <stdlib.h>
+
 #ifdef __APPLE__
 	#include <GL/glfw.h>
 #else
@@ -11,10 +13,7 @@
 	#include <GL/glut.h>
 #endif
 
-#include <stdlib.h>
 #include <cuda_runtime.h>
-#include <cutil_inline.h>
-#include <cutil_gl_inline.h>
 #include <cuda_gl_interop.h>
 #include <string>
 #include <iostream>
